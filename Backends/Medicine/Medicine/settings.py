@@ -1,4 +1,6 @@
-
+"""
+Mediova – Django Settings
+"""
 import os
 from pathlib import Path
 from datetime import timedelta
@@ -32,7 +34,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",       
+    "whitenoise.middleware.WhiteNoiseMiddleware",        # ← whitenoise add kiya
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -127,7 +129,7 @@ STATICFILES_DIRS = [
     BASE_DIR / "static" / "frontend",   # ← React build files
 ]
 
-# Whitenoise — static files
+# Whitenoise — static files production mein serve karne ke liye
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 WHITENOISE_INDEX_FILE = True
 
