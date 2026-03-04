@@ -58,15 +58,14 @@ class Offer(models.Model):
         return self.title
 
 
-# 👇 Cart
-
 class Cart(models.Model):
     customer_name = models.CharField(max_length=100)
     customer_phone = models.CharField(max_length=15)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def total(self):
-        return sum(item.subtotal() for item in self.items.all())
+        # ✅ FIX — select_related se N+1 query problem solve
+        return sum(item.subtotal() for item in self.items.select_related("medicine").all())
 
     def __str__(self):
         return f"Cart — {self.customer_name}"
@@ -109,6 +108,20 @@ class Order(models.Model):
     def __str__(self):
         return f"Order #{self.pk} — {self.customer_name}"
 
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def subtotal(self):
+        return self.unit_price * self.quantity
+
+    def __str__(self):
+        return f"{self.quantity}x {self.medicine.name}"
+
+
 class Prescription(models.Model):
     STATUS_CHOICES = [
         ("pending", "Pending"),
@@ -125,7 +138,8 @@ class Prescription(models.Model):
 
     def __str__(self):
         return f"Rx #{self.pk} — {self.customer_name}"
-    
+
+
 class Consultation(models.Model):
     SPECIALTY_CHOICES = [
         ("general", "General Physician"),
@@ -152,15 +166,3 @@ class Consultation(models.Model):
 
     def __str__(self):
         return f"Consult #{self.pk} — {self.customer_name}"
-    
-class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
-    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
-
-    def subtotal(self):
-        return self.unit_price * self.quantity
-
-    def __str__(self):
-        return f"{self.quantity}x {self.medicine.name}"

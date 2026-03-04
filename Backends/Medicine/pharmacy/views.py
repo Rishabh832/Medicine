@@ -1,9 +1,8 @@
 from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser, FormParser
-from django.db.models import Q, F   # ← F added for stock update
-from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser  # ✅ FIX 1 — duplicate import hataya
+from django.db.models import Q, F
 
 from .models import (
     Category, Medicine, Offer,
@@ -53,7 +52,7 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
     queryset = Prescription.objects.all().order_by("-uploaded_at")
     serializer_class = PrescriptionSerializer
     permission_classes = [permissions.AllowAny]
-    parser_classes = [MultiPartParser, FormParser, JSONParser]  # ✅ JSONParser add kiya
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -102,7 +101,6 @@ class AddCartItemView(APIView):
         cart_id     = request.data.get("cart_id")
         medicine_id = request.data.get("medicine_id")
 
-        # ✅ BUG 1 FIX — safe int conversion
         try:
             quantity = int(request.data.get("quantity", 1))
         except (TypeError, ValueError):
@@ -118,6 +116,13 @@ class AddCartItemView(APIView):
             CartItem.objects.filter(cart=cart, medicine=medicine).delete()
             return Response(CartSerializer(cart, context={"request": request}).data)
 
+        # ✅ FIX 2 — stock check cart mein add karte waqt
+        if quantity > medicine.stock:
+            return Response(
+                {"detail": f"Only {medicine.stock} unit(s) available in stock."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         item, _ = CartItem.objects.get_or_create(cart=cart, medicine=medicine)
         item.quantity = quantity
         item.save()
@@ -131,13 +136,12 @@ class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
     http_method_names  = ["get", "post"]
 
-    # ✅ BUG 5 FIX — orders only visible by phone number
     def get_queryset(self):
         phone = self.request.query_params.get("phone")
         qs = Order.objects.prefetch_related("items__medicine")
         if phone:
             return qs.filter(customer_phone=phone)
-        return qs.none()   # no phone = nothing exposed
+        return qs.none()
 
     def create(self, request):
         cart_id          = request.data.get("cart_id")
@@ -157,13 +161,24 @@ class OrderViewSet(viewsets.ModelViewSet):
         if not cart.items.exists():
             return Response({"detail": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
 
-        total = float(cart.total())
+        # ✅ FIX 3 — order place karne se pehle stock validate karo
+        out_of_stock = []
+        for item in cart.items.select_related("medicine"):
+            if item.medicine.stock < item.quantity:
+                out_of_stock.append(
+                    f"{item.medicine.name} (available: {item.medicine.stock}, requested: {item.quantity})"
+                )
+        if out_of_stock:
+            return Response(
+                {"detail": "Insufficient stock for: " + ", ".join(out_of_stock)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        # ✅ BUG 4 FIX — apply offer/discount
+        total    = float(cart.total())
+        discount = 0.0
+        offer_obj = None
+
         offer_code = request.data.get("offer_code")
-        discount   = 0.0
-        offer_obj  = None
-
         if offer_code:
             try:
                 offer_obj = Offer.objects.get(code=offer_code, is_active=True)
@@ -192,7 +207,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             offer            = offer_obj,
         )
 
-        # ✅ BUG 2 FIX — decrement stock on order
         for item in cart.items.select_related("medicine"):
             OrderItem.objects.create(
                 order      = order,
@@ -218,4 +232,4 @@ class ConsultationViewSet(viewsets.ModelViewSet):
     queryset = Consultation.objects.all().order_by("-created_at")
     serializer_class   = ConsultationSerializer
     permission_classes = [permissions.AllowAny]
-    http_method_names = ["get", "post", "patch", "put", "delete"]
+    http_method_names  = ["get", "post", "patch", "put", "delete"]

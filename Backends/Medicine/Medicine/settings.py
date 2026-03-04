@@ -13,7 +13,9 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-medirun-change-this-i
 
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost 127.0.0.1").split(" ")
+ALLOWED_HOSTS = [
+    h for h in os.environ.get("ALLOWED_HOSTS", "localhost 127.0.0.1").split(" ") if h
+]
 
 # ─── Apps ─────────────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
@@ -34,7 +36,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",        # ← whitenoise add kiya
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -50,7 +52,8 @@ TEMPLATES = [
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [
             BASE_DIR / "templates",
-            BASE_DIR / "static" / "frontend",   # ← React index.html
+            BASE_DIR / "staticfiles",
+            BASE_DIR / "staticfiles" / "frontend",
         ],
         "APP_DIRS": True,
         "OPTIONS": {
@@ -70,12 +73,10 @@ WSGI_APPLICATION = "Medicine.wsgi.application"
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
-    # Render PostgreSQL (production)
     DATABASES = {
         "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
 else:
-    # Local SQLite
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -111,10 +112,12 @@ SIMPLE_JWT = {
 }
 
 # ─── CORS ─────────────────────────────────────────────────────────────────────
-CORS_ALLOWED_ORIGINS = os.environ.get(
-    "CORS_ALLOWED_ORIGINS",
-    "http://localhost:3000 http://localhost:5173 http://127.0.0.1:5173"
-).split(" ")
+CORS_ALLOWED_ORIGINS = [
+    o for o in os.environ.get(
+        "CORS_ALLOWED_ORIGINS",
+        "http://localhost:3000 http://localhost:5173 http://127.0.0.1:5173"
+    ).split(" ") if o
+]
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -125,12 +128,18 @@ MEDIA_ROOT = BASE_DIR / "media"
 STATIC_URL  = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STATICFILES_DIRS = [
-    BASE_DIR / "static" / "frontend",   # ← React build files
-]
+# ✅ FIX — sirf tab include karo jab folder exist kare
+# (pehli baar npm run build se pehle yeh folder nahi hota, jisse 500 error aata tha)
+_frontend_static = BASE_DIR / "static" / "frontend"
+STATICFILES_DIRS = [_frontend_static] if _frontend_static.exists() else []
 
-# Whitenoise — static files production mein serve karne ke liye
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# ✅ FIX — local dev mein CompressedManifest use mat karo
+# (collectstatic ke baad hi yeh kaam karta hai, pehle nahi)
+if DEBUG:
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+else:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 WHITENOISE_INDEX_FILE = True
 
 # ─── Internationalisation ─────────────────────────────────────────────────────

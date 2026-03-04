@@ -1,34 +1,41 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import logo from "/src/assets/logo.png";
 
-const API = "http://localhost:8000/api";
+const API = "/api";
 const get = (url) => fetch(API + url).then(r => r.json());
 const post = (url, body) =>
   fetch(API + url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(r => r.json());
 const postForm = (url, fd) =>
   fetch(API + url, { method: "POST", body: fd }).then(r => r.json());
 
-// ── Responsive hook ───────────────────────────────────────────────────────────
-const useResponsive = () => {
-  const mobileQ = window.matchMedia("(max-width: 767px)");
-  const tabletQ = window.matchMedia("(min-width: 768px) and (max-width: 1023px)");
+// ✅ FIX — Image URL: dev mein Django ka port use karo, production mein same origin
+const getImgUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  const base = import.meta.env.DEV ? "http://127.0.0.1:8000" : "";
+  return `${base}${path}`;
+};
 
-  const [isMobile, setIsMobile] = useState(mobileQ.matches);
-  const [isTablet, setIsTablet] = useState(tabletQ.matches);
+// ✅ FIX 2 — useResponsive: MediaQueryList objects useRef mein rakhe (stale listener bug fix)
+const useResponsive = () => {
+  const mobileQ = useRef(window.matchMedia("(max-width: 767px)"));
+  const tabletQ = useRef(window.matchMedia("(min-width: 768px) and (max-width: 1023px)"));
+
+  const [isMobile, setIsMobile] = useState(mobileQ.current.matches);
+  const [isTablet, setIsTablet] = useState(tabletQ.current.matches);
 
   useEffect(() => {
-    // force sync on mount
-    setIsMobile(mobileQ.matches);
-    setIsTablet(tabletQ.matches);
+    const mq = mobileQ.current;
+    const tq = tabletQ.current;
 
     const onMobile = (e) => setIsMobile(e.matches);
     const onTablet = (e) => setIsTablet(e.matches);
 
-    mobileQ.addEventListener("change", onMobile);
-    tabletQ.addEventListener("change", onTablet);
+    mq.addEventListener("change", onMobile);
+    tq.addEventListener("change", onTablet);
     return () => {
-      mobileQ.removeEventListener("change", onMobile);
-      tabletQ.removeEventListener("change", onTablet);
+      mq.removeEventListener("change", onMobile);
+      tq.removeEventListener("change", onTablet);
     };
   }, []);
 
@@ -146,17 +153,14 @@ const MobileDrawer = ({ open, onClose, page, setPage, userName, userPhone, cartC
   ];
 
   const goto = (id) => { setPage(id); onClose(); };
-  const initial = userName ? userName.charAt(0).toUpperCase() : "U";
 
   return (
     <>
-      {/* Overlay */}
       <div onClick={onClose} style={{
         position:"fixed", inset:0, background:"rgba(0,0,0,.55)", zIndex:2000,
         opacity: open?1:0, pointerEvents: open?"all":"none",
         transition:"opacity .3s ease", backdropFilter:"blur(4px)"
       }}/>
-      {/* Drawer */}
       <div style={{
         position:"fixed", top:0, left:0, bottom:0, width:300, background:"#fff",
         zIndex:2001, transform: open?"translateX(0)":"translateX(-100%)",
@@ -164,12 +168,10 @@ const MobileDrawer = ({ open, onClose, page, setPage, userName, userPhone, cartC
         display:"flex", flexDirection:"column", overflow:"hidden",
         boxShadow: open?"8px 0 40px rgba(0,0,0,.18)":"none"
       }}>
-        {/* Header / User Profile */}
         <div style={{ background:"linear-gradient(135deg,#00b894,#0984e3)", padding:"48px 24px 28px", position:"relative" }}>
           <button onClick={onClose} style={{ position:"absolute", top:16, right:16, background:"rgba(255,255,255,.2)", border:"none", borderRadius:10, width:36, height:36, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff" }}>
             <Icon name="x" size={18} color="#fff"/>
           </button>
-          {/* Avatar */}
           <div style={{ margin:"0 auto 14px", width:72, height:72 }}>
             <img src={logo} alt="Mediova" style={{ width:"100%", height:"100%", objectFit:"contain" }}/>
           </div>
@@ -177,7 +179,6 @@ const MobileDrawer = ({ open, onClose, page, setPage, userName, userPhone, cartC
           <p style={{ margin:0, fontSize:13, color:"rgba(255,255,255,.75)", display:"flex", alignItems:"center", gap:6 }}>
             <Icon name="bell" size={12} color="rgba(255,255,255,.75)"/> {userPhone}
           </p>
-          {/* Cart badge in header */}
           {cartCount > 0 && (
             <div onClick={()=>goto("cart")} style={{ marginTop:14, display:"inline-flex", alignItems:"center", gap:8, background:"rgba(255,255,255,.2)", borderRadius:10, padding:"8px 14px", cursor:"pointer" }}>
               <Icon name="cart" size={16} color="#fff"/>
@@ -186,7 +187,6 @@ const MobileDrawer = ({ open, onClose, page, setPage, userName, userPhone, cartC
           )}
         </div>
 
-        {/* Nav Links */}
         <div style={{ flex:1, overflowY:"auto", padding:"16px 12px" }}>
           <p style={{ fontSize:11, fontWeight:700, color:"#b2bec3", letterSpacing:1.2, padding:"0 12px", marginBottom:8 }}>NAVIGATION</p>
           {nav.map(n => {
@@ -219,7 +219,6 @@ const MobileDrawer = ({ open, onClose, page, setPage, userName, userPhone, cartC
           })}
         </div>
 
-        {/* Footer */}
         <div style={{ padding:"12px 16px 28px", borderTop:"1px solid #f0f0f0" }}>
           <button onClick={onLogout} style={{
             display:"flex", alignItems:"center", gap:12, width:"100%", padding:"13px 14px",
@@ -256,7 +255,6 @@ const Navbar = ({ page, setPage, cartCount, userName, userPhone, onLogout }) => 
 
   return (
     <>
-      {/* Mobile Side Drawer */}
       {isMobile && (
         <MobileDrawer
           open={drawerOpen} onClose={()=>setDrawerOpen(false)}
@@ -269,19 +267,16 @@ const Navbar = ({ page, setPage, cartCount, userName, userPhone, onLogout }) => 
       <nav style={{ background:"#fff", boxShadow:"0 1px 0 #e8ecf0, 0 4px 20px rgba(0,0,0,.04)", position:"sticky", top:0, zIndex:1000 }}>
         <div style={{ maxWidth:1280, margin:"0 auto", padding: isMobile?"0 16px":"0 24px", display:"flex", alignItems:"center", height: isMobile?60:68, gap:8 }}>
 
-          {/* Hamburger — Mobile only */}
           {isMobile && (
             <button onClick={()=>setDrawerOpen(true)} style={{ background:"#f4f6f8", border:"none", borderRadius:10, width:40, height:40, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", marginRight:8, flexShrink:0 }}>
               <Icon name="menu" size={20} color="#2d3436"/>
             </button>
           )}
 
-          {/* Logo */}
           <div onClick={()=>setPage("home")} style={{ display:"flex", alignItems:"center", gap:10, cursor:"pointer", marginRight: isDesktop?40:16, flexShrink:0 }}>
             <img src={logo} alt="Mediova" style={{ height: isMobile?70:90, width:"auto", objectFit:"contain", filter:"drop-shadow(0 2px 6px rgba(0,180,216,.25))" }}/>
           </div>
 
-          {/* Desktop + Tablet nav links */}
           {!isMobile && (
             <div style={{ display:"flex", gap:4, flex:1 }}>
               {nav.map(n => {
@@ -307,31 +302,25 @@ const Navbar = ({ page, setPage, cartCount, userName, userPhone, onLogout }) => 
             </div>
           )}
 
-          {/* Mobile: flex spacer */}
           {isMobile && <div style={{ flex:1 }}/>}
 
-          {/* Right actions */}
           <div style={{ display:"flex", alignItems:"center", gap: isMobile?8:12, flexShrink:0 }}>
-            {/* User chip — desktop only */}
             {isDesktop && (
               <div style={{ display:"flex", alignItems:"center", gap:8, background:"#f4f6f8", borderRadius:12, padding:"8px 14px" }}>
                 <div style={{ width:28, height:28, borderRadius:8, background:"linear-gradient(135deg,#00b894,#00cec9)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:800, color:"#fff" }}>{initial}</div>
                 <span style={{ fontSize:13, fontWeight:600, color:"#2d3436" }}>{userName}</span>
               </div>
             )}
-            {/* Tablet avatar */}
             {isTablet && (
               <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#00b894,#00cec9)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, fontWeight:800, color:"#fff" }}>{initial}</div>
             )}
 
-            {/* Cart */}
             <button onClick={()=>setPage("cart")} style={{ position:"relative", background:"linear-gradient(135deg,#00b894,#00cec9)", border:"none", borderRadius:12, padding: isMobile?"9px":"10px 16px", cursor:"pointer", display:"flex", alignItems:"center", gap:7, boxShadow:"0 4px 12px #00b89440" }}>
               <Icon name="cart" size={isMobile?18:17} color="#fff"/>
               {!isMobile && <span style={{ color:"#fff", fontSize:13, fontWeight:700 }}>Cart</span>}
               {cartCount>0 && <span style={{ position:"absolute", top:-7, right:-7, background:"#ff4757", color:"#fff", borderRadius:"50%", width:20, height:20, fontSize:11, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", border:"2px solid #fff" }}>{cartCount}</span>}
             </button>
 
-            {/* Logout — desktop/tablet */}
             {!isMobile && (
               <button onClick={onLogout} title="Logout" style={{ background:"#fff5f5", border:"none", borderRadius:12, padding:"10px 12px", cursor:"pointer", display:"flex", alignItems:"center" }}>
                 <Icon name="logout" size={17} color="#ff4757"/>
@@ -341,10 +330,9 @@ const Navbar = ({ page, setPage, cartCount, userName, userPhone, onLogout }) => 
         </div>
       </nav>
 
-      {/* Mobile Bottom Nav */}
       {isMobile && (
         <div style={{ position:"fixed", bottom:0, left:0, right:0, background:"#fff", borderTop:"1px solid #e8ecf0", display:"flex", zIndex:999, paddingBottom:"env(safe-area-inset-bottom,0px)", boxShadow:"0 -4px 20px rgba(0,0,0,.08)" }}>
-          {[...nav.slice(0,4), { id:"orders", label:"Orders", icon:"truck" }].map(n => {
+          {nav.map(n => {
             const active = page === n.id;
             return (
               <button key={n.id} onClick={()=>setPage(n.id)} style={{
@@ -371,7 +359,8 @@ const Navbar = ({ page, setPage, cartCount, userName, userPhone, onLogout }) => 
 
 // ── Medicine Card ─────────────────────────────────────────────────────────────
 const MedCard = ({ m, onAdd }) => {
-  const img = m.image ? (m.image.startsWith("http") ? m.image : `http://localhost:8000${m.image}`) : null;
+  // ✅ FIX — getImgUrl se sahi URL milega (dev + production dono mein)
+  const img = getImgUrl(m.image);
   return (
     <div style={{ background:"#fff", borderRadius:16, border:"1px solid #f0f0f0", overflow:"hidden", boxShadow:"0 2px 12px rgba(0,0,0,.05)", transition:"transform .2s,box-shadow .2s" }}
       onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)";e.currentTarget.style.boxShadow="0 10px 30px rgba(0,0,0,.1)"}}
@@ -416,7 +405,7 @@ const HomePage = ({ setPage, setSearch }) => {
   useEffect(() => {
     get("/offers/").then(d=>setOffers(Array.isArray(d)?d:d.results||[]));
     get("/categories/").then(d=>setCategories(Array.isArray(d)?d:d.results||[]));
-    get("/medicines/").then(d=>setFeatured((Array.isArray(d)?d:d.results||[]).slice(0,4)));
+    get("/medicines/").then(d=>setFeatured((Array.isArray(d)?d:d.results||[]).slice(0,16)));
   }, []);
 
   const actions = [
@@ -430,7 +419,6 @@ const HomePage = ({ setPage, setSearch }) => {
 
   return (
     <div style={{ maxWidth:1280, margin:"0 auto", padding:pad }}>
-      {/* Hero */}
       <div style={{ background:"linear-gradient(135deg,#00b894 0%,#00cec9 50%,#0984e3 100%)", borderRadius: isMobile?"0 0 28px 28px":24, padding: isMobile?"28px 22px 32px":"52px 56px", marginBottom:24, position:"relative", overflow:"hidden", marginLeft: isMobile?-16:0, marginRight: isMobile?-16:0 }}>
         <div style={{ position:"absolute", right:-40, top:-40, width:220, height:220, background:"rgba(255,255,255,.08)", borderRadius:"50%" }}/>
         <div style={{ position:"absolute", right:60, bottom:-60, width:160, height:160, background:"rgba(255,255,255,.05)", borderRadius:"50%" }}/>
@@ -453,7 +441,6 @@ const HomePage = ({ setPage, setSearch }) => {
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap: isMobile?10:16, marginBottom:28 }}>
         {actions.map(a=>(
           <button key={a.label} onClick={()=>setPage(a.page)} style={{ background:a.bg, border:"none", borderRadius: isMobile?14:18, padding: isMobile?"16px 8px":"24px 12px", cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", gap: isMobile?8:10, transition:"transform .2s, box-shadow .2s", boxShadow:"0 2px 10px rgba(0,0,0,.05)" }}
@@ -467,11 +454,10 @@ const HomePage = ({ setPage, setSearch }) => {
         ))}
       </div>
 
-      {/* Offers */}
       {offers.length>0&&(
         <div style={{ marginBottom:28 }}>
           <h2 style={{ fontSize: isMobile?17:22, fontWeight:800, color:"#1a1a2e", marginBottom:14 }}>🏷️ Today's Offers</h2>
-          <div style={{ display:"grid", gridTemplateColumns: isMobile?"1fr":isTablet?"repeat(2,1fr)":"repeat(3,1fr)", gap:14, overflowX: isMobile?"auto":"visible" }}>
+          <div style={{ display:"grid", gridTemplateColumns: isMobile?"1fr":isTablet?"repeat(2,1fr)":"repeat(3,1fr)", gap:14 }}>
             {offers.map(o=>(
               <div key={o.id} style={{ background:`linear-gradient(135deg,${o.color}18,${o.color}35)`, borderRadius:16, padding:18, border:`1.5px solid ${o.color}30` }}>
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:10 }}>
@@ -487,7 +473,6 @@ const HomePage = ({ setPage, setSearch }) => {
         </div>
       )}
 
-      {/* Categories */}
       {categories.length>0&&(
         <div style={{ marginBottom:28 }}>
           <h2 style={{ fontSize: isMobile?17:22, fontWeight:800, color:"#1a1a2e", marginBottom:14 }}>📂 Categories</h2>
@@ -503,7 +488,6 @@ const HomePage = ({ setPage, setSearch }) => {
         </div>
       )}
 
-      {/* Featured */}
       {featured.length>0&&(
         <div>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
@@ -530,6 +514,10 @@ const MedicinesPage = ({ cartData, setCartData, cartId, toast, searchInit }) => 
   const [loading, setLoading] = useState(false);
   const [pg, setPg] = useState(1);
   const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    if (searchInit) { setSearch(searchInit); setPg(1); }
+  }, [searchInit]);
 
   const load = useCallback(async()=>{
     setLoading(true);
@@ -561,7 +549,6 @@ const MedicinesPage = ({ cartData, setCartData, cartId, toast, searchInit }) => 
   return (
     <div style={{ maxWidth:1280, margin:"0 auto", padding: isMobile?"16px 16px 90px":"32px 24px" }}>
       <h1 style={{ fontSize: isMobile?22:28, fontWeight:800, color:"#1a1a2e", marginBottom:20 }}>💊 Buy Medicines</h1>
-      {/* Filter bar */}
       <div style={{ background:"#fff", borderRadius:16, padding:16, marginBottom:20, boxShadow:"0 2px 12px rgba(0,0,0,.05)", border:"1px solid #f0f0f0" }}>
         <div style={{ position:"relative", marginBottom:12 }}>
           <div style={{ position:"absolute", left:13, top:"50%", transform:"translateY(-50%)" }}><Icon name="search" size={16} color="#b2bec3"/></div>
@@ -675,11 +662,11 @@ const CartPage = ({ cartData, setCartData, cartId, toast, setPage }) => {
         </div>
       ):(
         <div style={{ display:"grid", gridTemplateColumns: isMobile?"1fr":"1fr 340px", gap:20, alignItems:"start" }}>
-          {/* Items */}
           <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
             {items.map(item=>{
               const med=item.medicine;
-              const img=med?.image?(med.image.startsWith("http")?med.image:`http://localhost:8000${med.image}`):null;
+              
+              const img = getImgUrl(med?.image);
               return(
                 <div key={item.id} style={{ background:"#fff", borderRadius:16, padding:14, border:"1px solid #f0f0f0", display:"flex", gap:12, alignItems:"center", boxShadow:"0 2px 10px rgba(0,0,0,.04)" }}>
                   <div style={{ width:56, height:56, background:img?`url(${img}) center/cover`:"linear-gradient(135deg,#e8f8f5,#e3f6ff)", borderRadius:12, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
@@ -708,7 +695,6 @@ const CartPage = ({ cartData, setCartData, cartId, toast, setPage }) => {
             })}
           </div>
 
-          {/* Order Summary */}
           <div style={{ background:"#fff", borderRadius:20, padding:22, border:"1px solid #f0f0f0", boxShadow:"0 4px 20px rgba(0,0,0,.06)", position: isMobile?"static":"sticky", top:88 }}>
             <h3 style={{ margin:"0 0 18px", fontSize:17, fontWeight:800, color:"#1a1a2e" }}>Order Summary</h3>
             <div style={{ display:"flex", justifyContent:"space-between", marginBottom:10, fontSize:14 }}>
@@ -757,8 +743,11 @@ const PrescriptionPage = ({ userName, userPhone, toast }) => {
   const [uploading, setUploading] = useState(false);
   const [notes, setNotes] = useState("");
 
-  const load = ()=>get(`/prescriptions/?customer_phone=${userPhone}`).then(d=>setPrescriptions(Array.isArray(d)?d:d.results||[]));
-  useEffect(()=>{load();},[]);
+  const load = useCallback(() => {
+    get(`/prescriptions/?customer_phone=${userPhone}`).then(d=>setPrescriptions(Array.isArray(d)?d:d.results||[]));
+  }, [userPhone]);
+
+  useEffect(()=>{ load(); },[load]);
 
   const handleFile=(e)=>{
     const f=e.target.files[0]; if(!f) return;
@@ -786,7 +775,6 @@ const PrescriptionPage = ({ userName, userPhone, toast }) => {
       <h1 style={{ fontSize: isMobile?22:28, fontWeight:800, color:"#1a1a2e", marginBottom:6 }}>📋 Prescription</h1>
       <p style={{ color:"#8892a4", marginBottom:24, fontSize:14 }}>Upload your prescription and our pharmacist will verify it within 2 hours.</p>
       <div style={{ display:"grid", gridTemplateColumns: isMobile?"1fr":"1fr 1fr", gap:20 }}>
-        {/* Upload */}
         <div style={{ background:"#fff", borderRadius:20, padding:24, boxShadow:"0 4px 20px rgba(0,0,0,.05)", border:"1px solid #f0f0f0" }}>
           <h2 style={{ fontSize:17, fontWeight:800, marginBottom:20, color:"#1a1a2e" }}>Upload New</h2>
           <div onClick={()=>document.getElementById("rx-inp").click()}
@@ -811,7 +799,6 @@ const PrescriptionPage = ({ userName, userPhone, toast }) => {
             {uploading?"Uploading...":"Upload Prescription"}
           </button>
         </div>
-        {/* List */}
         <div style={{ background:"#fff", borderRadius:20, padding:24, boxShadow:"0 4px 20px rgba(0,0,0,.05)", border:"1px solid #f0f0f0" }}>
           <h2 style={{ fontSize:17, fontWeight:800, marginBottom:20, color:"#1a1a2e" }}>My Prescriptions</h2>
           {prescriptions.length===0?(
@@ -850,8 +837,11 @@ const ConsultPage = ({ userName, userPhone, toast }) => {
   const [booking, setBooking] = useState(false);
   const [booked, setBooked] = useState(null);
 
-  const load=()=>get("/consultations/").then(d=>setConsultations(Array.isArray(d)?d:d.results||[]));
-  useEffect(()=>{load();},[]);
+  const load = useCallback(() => {
+    get(`/consultations/?customer_phone=${userPhone}`).then(d=>setConsultations(Array.isArray(d)?d:d.results||[]));
+  }, [userPhone]);
+
+  useEffect(()=>{ load(); },[load]);
 
   const doctors=[
     { key:"general",    name:"General Physician",emoji:"👨‍⚕️",fee:299, color:"#00b894",bg:"#e8f8f5" },
@@ -926,14 +916,14 @@ const ConsultPage = ({ userName, userPhone, toast }) => {
 
         <div style={{ background:"#fff", borderRadius:20, padding:20, boxShadow:"0 4px 20px rgba(0,0,0,.05)", border:"1px solid #f0f0f0", height:"fit-content" }}>
           <h3 style={{ fontSize:16, fontWeight:800, marginBottom:16, color:"#1a1a2e" }}>My Consultations</h3>
-          {consultations.filter(c=>c.customer_phone===userPhone).length===0?(
+          {consultations.length===0?(
             <div style={{ textAlign:"center", padding:"32px 0", color:"#b2bec3" }}>
               <div style={{ fontSize:40, marginBottom:8 }}>🩺</div>
               <p style={{ fontSize:13, margin:0 }}>No consultations yet</p>
             </div>
           ):(
             <div style={{ display:"flex", flexDirection:"column", gap:10, maxHeight:400, overflowY:"auto" }}>
-              {consultations.filter(c=>c.customer_phone===userPhone).map(c=>{
+              {consultations.map(c=>{
                 const doc=doctors.find(d=>d.key===c.specialty);
                 return(
                   <div key={c.id} style={{ border:"1.5px solid #f0f0f0", borderRadius:13, padding:12 }}>
@@ -1050,7 +1040,7 @@ const OrdersPage = ({ userPhone }) => {
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 import AdminApp from "./Admin";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 function MainApp() {
   const [page, setPage]           = useState("home");
@@ -1070,8 +1060,12 @@ function MainApp() {
 
   useEffect(() => {
     if (cartId && !cartData) {
-      get(`/cart/${cartId}/`).then(d => { if (d?.id) setCartData(d); }).catch(()=>{});
+      get(`/cart/${cartId}/`).then(d => { if (d?.id) setCartData(d); }).catch(()=>{
+        localStorage.removeItem("medi_cart_id");
+        setCartId(null);
+      });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cartId]);
 
   const handleUserSave = async (name, phone) => {

@@ -2,21 +2,45 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.http import FileResponse, HttpResponseNotFound
+from django.http import FileResponse, HttpResponse
 import os
 
-def serve_react(request, *args, **kwargs):
-    index_path = os.path.join(settings.BASE_DIR, 'staticfiles', 'frontend', 'index.html')
-    if os.path.exists(index_path):
-        return FileResponse(open(index_path, 'rb'), content_type='text/html')
-    index_path2 = os.path.join(settings.BASE_DIR, 'static', 'frontend', 'index.html')
-    if os.path.exists(index_path2):
-        return FileResponse(open(index_path2, 'rb'), content_type='text/html')
-    return HttpResponseNotFound("index.html not found")
+
+def spa_view(request, path=""):
+    index = os.path.join(settings.BASE_DIR, "static", "frontend", "index.html")
+    if not os.path.exists(index):
+        index = os.path.join(settings.STATIC_ROOT, "index.html")
+    if os.path.exists(index):
+        return FileResponse(open(index, "rb"), content_type="text/html")
+    return HttpResponse("Frontend not built. Run: npm run build", status=200)
+
+
+def asset_view(request, path):
+    asset = os.path.join(settings.BASE_DIR, "static", "frontend", "assets", path)
+    if not os.path.exists(asset):
+        asset = os.path.join(settings.STATIC_ROOT, "assets", path)
+    if os.path.exists(asset):
+        if path.endswith(".js"):
+            ct = "application/javascript"
+        elif path.endswith(".css"):
+            ct = "text/css"
+        elif path.endswith(".svg"):
+            ct = "image/svg+xml"
+        elif path.endswith(".png"):
+            ct = "image/png"
+        elif path.endswith(".jpg") or path.endswith(".jpeg"):
+            ct = "image/jpeg"
+        else:
+            ct = "application/octet-stream"
+        return FileResponse(open(asset, "rb"), content_type=ct)
+    return HttpResponse("Not found", status=404)
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("pharmacy.urls")),
-    path("", serve_react),
-    path("<path:path>", serve_react),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path("assets/<path:path>", asset_view),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + [  # ✅ media pehle
+    path("", spa_view),
+    path("<path:path>", spa_view),
+]

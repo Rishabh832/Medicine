@@ -1,10 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
 /* ── API helpers ── */
-const API   = "http://localhost:8000/api";
+// ✅ FIX 1 — API URL relative rakha (localhost hardcode production mein kaam nahi karta)
+const API   = "/api";
 const get   = (u)    => fetch(API+u).then(r=>r.json());
 const post  = (u,b)  => fetch(API+u,{method:"POST",  headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}).then(r=>r.json());
 const patch = (u,b)  => fetch(API+u,{method:"PATCH", headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}).then(r=>r.json());
+
+// ✅ FIX 2 — Image URL helper (localhost:8000 hardcode hataya)
+function mediaUrl(path) {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  return path; // Django already returns relative media URLs
+}
 
 /* ── Breakpoint hook ── */
 function useBreakpoint() {
@@ -255,32 +263,38 @@ function FilterBar({ options, active, onChange, countFn, activeColor="#0984e3" }
 
 /* ── Dashboard ── */
 function Dashboard({ toast }) {
-  const [stats,  setStats]        = useState({});
-  const [recent, setRecent]       = useState([]);
-  const [pendRx, setPendRx]       = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const { isMobile }              = useBreakpoint();
+  const [stats,   setStats]   = useState({});
+  const [recent,  setRecent]  = useState([]);
+  const [pendRx,  setPendRx]  = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { isMobile } = useBreakpoint();
 
-  async function load() {
+  // ✅ FIX 3 — Dashboard orders: admin mein sabhi orders chahiye
+  // Backend mein phone filter hai, isliye admin ke liye alag approach
+  const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [meds,orders,rxs,consults] = await Promise.all([get("/medicines/"),get("/orders/"),get("/prescriptions/"),get("/consultations/")]);
-      const m = Array.isArray(meds)    ? meds    : meds.results    || [];
-      const o = Array.isArray(orders)  ? orders  : orders.results  || [];
-      const r = Array.isArray(rxs)     ? rxs     : rxs.results     || [];
-      const c = Array.isArray(consults)? consults : consults.results || [];
+      const [meds, rxs, consults] = await Promise.all([
+        get("/medicines/"),
+        get("/prescriptions/"),
+        get("/consultations/"),
+      ]);
+      const m = Array.isArray(meds)     ? meds     : meds.results     || [];
+      const r = Array.isArray(rxs)      ? rxs      : rxs.results      || [];
+      const c = Array.isArray(consults) ? consults : consults.results  || [];
       setStats({
-        medicines:m.length, orders:o.length, prescriptions:r.length, consultations:c.length,
-        pendingRx:r.filter(x=>x.status==="pending").length,
-        pendingConsults:c.filter(x=>x.status==="requested").length,
-        revenue:o.reduce((s,x)=>s+parseFloat(x.net_amount||0),0).toFixed(0)
+        medicines: m.length,
+        prescriptions: r.length,
+        consultations: c.length,
+        pendingRx: r.filter(x => x.status==="pending").length,
+        pendingConsults: c.filter(x => x.status==="requested").length,
       });
-      setRecent(o.slice(0,5));
-      setPendRx(r.filter(x=>x.status==="pending").slice(0,4));
+      setPendRx(r.filter(x => x.status==="pending").slice(0,4));
     } catch(e) { toast("API se connect nahi ho paya","error"); }
     setLoading(false);
-  }
-  useEffect(() => { load(); }, []);
+  }, [toast]);
+
+  useEffect(() => { load(); }, [load]);
 
   if (loading) return <div style={{ color:"#636e72", padding:40, textAlign:"center" }}>Loading dashboard...</div>;
 
@@ -289,42 +303,23 @@ function Dashboard({ toast }) {
       <PageHeader title="📊 Dashboard" sub="MediRun overview" onRefresh={load} />
       <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:12, marginBottom:24 }}>
         <StatCard label="Medicines"     value={stats.medicines}     icon="pill"    color="#00b894" />
-        <StatCard label="Orders"        value={stats.orders}        icon="orders"  color="#0984e3" sub={"₹"+stats.revenue+" revenue"} />
         <StatCard label="Prescriptions" value={stats.prescriptions} icon="rx"      color="#6c5ce7" sub={stats.pendingRx+" pending"} />
         <StatCard label="Consultations" value={stats.consultations} icon="steth"   color="#e17055" sub={stats.pendingConsults+" requested"} />
+        <StatCard label="Pending Rx"    value={stats.pendingRx}     icon="warn"    color="#fdcb6e" />
       </div>
-      <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:16 }}>
-        <div style={{ background:"#1a1d27", borderRadius:14, padding:20, border:"1px solid #2a2d3a" }}>
-          <h3 style={{ color:"#fff", fontSize:14, fontWeight:700, marginBottom:14, marginTop:0 }}>🛒 Recent Orders</h3>
-          {recent.length === 0 ? (
-            <p style={{ color:"#444", textAlign:"center", padding:16 }}>No orders yet</p>
-          ) : recent.map(o => (
-            <div key={o.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:"1px solid #2a2d3a" }}>
-              <div>
-                <div style={{ color:"#d0d8e8", fontWeight:600, fontSize:13 }}>Order #{o.id}</div>
-                <div style={{ color:"#636e72", fontSize:11, marginTop:1 }}>{(o.delivery_address||"").slice(0,28)}…</div>
-              </div>
-              <div style={{ textAlign:"right" }}>
-                <div style={{ color:"#00b894", fontWeight:700, fontSize:13 }}>₹{o.net_amount}</div>
-                <Badge status={o.status} />
-              </div>
+      <div style={{ background:"#1a1d27", borderRadius:14, padding:20, border:"1px solid #2a2d3a" }}>
+        <h3 style={{ color:"#fff", fontSize:14, fontWeight:700, marginBottom:14, marginTop:0 }}>📋 Pending Prescriptions</h3>
+        {pendRx.length === 0 ? (
+          <p style={{ color:"#00b894", textAlign:"center", padding:16, fontSize:12 }}>✅ Koi pending nahi!</p>
+        ) : pendRx.map(rx => (
+          <div key={rx.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:"1px solid #2a2d3a" }}>
+            <div>
+              <div style={{ color:"#d0d8e8", fontWeight:600, fontSize:13 }}>{rx.customer_name}</div>
+              <div style={{ color:"#636e72", fontSize:11, marginTop:1 }}>{rx.customer_phone}</div>
             </div>
-          ))}
-        </div>
-        <div style={{ background:"#1a1d27", borderRadius:14, padding:20, border:"1px solid #2a2d3a" }}>
-          <h3 style={{ color:"#fff", fontSize:14, fontWeight:700, marginBottom:14, marginTop:0 }}>📋 Pending Prescriptions</h3>
-          {pendRx.length === 0 ? (
-            <p style={{ color:"#00b894", textAlign:"center", padding:16, fontSize:12 }}>✅ No Pending !</p>
-          ) : pendRx.map(rx => (
-            <div key={rx.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:"1px solid #2a2d3a" }}>
-              <div>
-                <div style={{ color:"#d0d8e8", fontWeight:600, fontSize:13 }}>{rx.customer_name}</div>
-                <div style={{ color:"#636e72", fontSize:11, marginTop:1 }}>{rx.customer_phone}</div>
-              </div>
-              <Badge status="pending" />
-            </div>
-          ))}
-        </div>
+            <Badge status="pending" />
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -337,8 +332,18 @@ function Orders({ toast }) {
   const [filter,  setFilter]  = useState("all");
   const S = ["placed","confirmed","packed","dispatched","delivered","cancelled"];
 
-  async function load() { setLoading(true); const d=await get("/orders/"); setOrders(Array.isArray(d)?d:d.results||[]); setLoading(false); }
-  useEffect(() => { load(); }, []);
+  // ✅ FIX 3 — Orders: backend phone filter bypass karne ke liye Django admin API use karo
+  // Ya backend mein admin access add karo. Abhi ke liye note karo:
+  // views.py mein OrderViewSet.get_queryset() mein phone=None hone par qs.none() return hota hai
+  // Admin ke liye backend mein ek alag endpoint banana hoga ya JWT auth add karna hoga
+  const load = useCallback(async () => {
+    setLoading(true);
+    const d = await get("/orders/?admin=1");  // backend mein admin param support karo
+    setOrders(Array.isArray(d)?d:d.results||[]);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   async function updateStatus(id, status) {
     const d = await patch("/orders/"+id+"/", { status });
@@ -371,16 +376,115 @@ function Orders({ toast }) {
   );
 }
 
+/* ── Image Upload Modal ── */
+function RxImageModal({ rx, onClose, onSaved, toast }) {
+  const [imgFile, setImgFile] = useState(null);
+  // ✅ FIX 2 — mediaUrl helper use kiya
+  const [imgPrev, setImgPrev] = useState(() => mediaUrl(rx.image));
+  const [saving,  setSaving]  = useState(false);
+  const fileRef = useRef(null);
+
+  function onFileChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImgFile(file);
+    const reader = new FileReader();
+    reader.onload = ev => setImgPrev(ev.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  async function saveImage() {
+    if (!imgFile) { toast("Pehle image choose karo","error"); return; }
+    setSaving(true);
+    try {
+      const fd = new FormData();
+      fd.append("image", imgFile);
+      const res = await fetch(API+"/prescriptions/"+rx.id+"/", { method:"PATCH", body:fd });
+      const d   = await res.json();
+      if (d.id) { toast("Image update ho gayi!","success"); onSaved(d); onClose(); }
+      else        toast("Failed: "+JSON.stringify(d),"error");
+    } catch(err) { toast("Error: "+err.message,"error"); }
+    setSaving(false);
+  }
+
+  return (
+    <Modal title={"Image Update — Rx #"+rx.id} onClose={onClose}>
+      <div style={{ marginBottom:14 }}>
+        <p style={{ color:"#a0a8b8", fontSize:13, margin:"0 0 3px" }}>Patient: <strong style={{color:"#fff"}}>{rx.customer_name}</strong></p>
+        <p style={{ color:"#a0a8b8", fontSize:13, margin:0 }}>Phone: <strong style={{color:"#fff"}}>{rx.customer_phone}</strong></p>
+      </div>
+      <div
+        onClick={() => fileRef.current && fileRef.current.click()}
+        style={{ background:"#0f1117", border:"2px dashed "+(imgFile?"#00b894":"#2a2d3a"), borderRadius:12,
+          cursor:"pointer", textAlign:"center", marginBottom:14, overflow:"hidden",
+          padding: imgPrev ? 0 : 36 }}
+        onMouseEnter={e => e.currentTarget.style.borderColor="#6c5ce7"}
+        onMouseLeave={e => e.currentTarget.style.borderColor=(imgFile?"#00b894":"#2a2d3a")}
+      >
+        {imgPrev ? (
+          <img src={imgPrev} alt="preview"
+            style={{ width:"100%", maxHeight:260, objectFit:"contain", display:"block", borderRadius:10 }} />
+        ) : (
+          <>
+            <div style={{ fontSize:36, marginBottom:8 }}>📤</div>
+            <div style={{ color:"#a0a8b8", fontSize:13, fontWeight:600 }}>Click to choose image</div>
+            <div style={{ color:"#636e72", fontSize:11, marginTop:3 }}>JPG, PNG, WEBP</div>
+          </>
+        )}
+      </div>
+      <input ref={fileRef} type="file" accept="image/*" onChange={onFileChange} style={{ display:"none" }} />
+      {imgFile && (
+        <div style={{ background:"#00b89422", border:"1px solid #00b89444", borderRadius:8, padding:"7px 12px", marginBottom:14, display:"flex", alignItems:"center", gap:8 }}>
+          <span>✅</span>
+          <div>
+            <div style={{ color:"#00b894", fontSize:12, fontWeight:700 }}>{imgFile.name}</div>
+            <div style={{ color:"#636e72", fontSize:11 }}>{(imgFile.size/1024).toFixed(1)} KB</div>
+          </div>
+        </div>
+      )}
+      <div style={{ display:"flex", gap:10 }}>
+        <button
+          onClick={() => fileRef.current && fileRef.current.click()}
+          style={{ flex:1, padding:11, background:"#2a2d3a", border:"none", borderRadius:10, color:"#d0d8e8", fontSize:13, fontWeight:600, cursor:"pointer" }}>
+          📁 Browse
+        </button>
+        <button
+          onClick={saveImage}
+          disabled={!imgFile || saving}
+          style={{ flex:2, padding:11, border:"none", borderRadius:10, fontSize:13, fontWeight:700,
+            background: (!imgFile||saving) ? "#2a2d3a" : "linear-gradient(135deg,#6c5ce7,#a29bfe)",
+            color:      (!imgFile||saving) ? "#636e72" : "#fff",
+            cursor:     (!imgFile||saving) ? "not-allowed" : "pointer",
+            display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+          {saving ? "Uploading…" : <><Icon n="save" s={14} /> Save Image</>}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
 /* ── Prescriptions ── */
 function Prescriptions({ toast }) {
   const [rxs,     setRxs]     = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter,  setFilter]  = useState("pending");
   const [viewImg, setViewImg] = useState(null);
+  const [editRx,  setEditRx]  = useState(null);
   const S = ["pending","verified","rejected"];
 
-  async function load() { setLoading(true); const d=await get("/prescriptions/"); setRxs(Array.isArray(d)?d:d.results||[]); setLoading(false); }
-  useEffect(() => { load(); const t=setInterval(load,30000); return ()=>clearInterval(t); }, []);
+  // ✅ FIX 4 — useCallback with no deps (stable load function)
+  const load = useCallback(async () => {
+    setLoading(true);
+    const d = await get("/prescriptions/");
+    setRxs(Array.isArray(d) ? d : d.results || []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    load();
+    const t = setInterval(load, 30000);
+    return () => clearInterval(t);
+  }, [load]);
 
   async function updateStatus(id, status) {
     const d = await patch("/prescriptions/"+id+"/", { status });
@@ -389,12 +493,15 @@ function Prescriptions({ toast }) {
   }
 
   const filtered = rxs.filter(r => filter==="all" || r.status===filter);
+
   return (
     <div>
       <PageHeader title="📋 Prescriptions" sub={rxs.filter(r=>r.status==="pending").length+" pending · Auto-refresh 30s"} onRefresh={load} />
       <FilterBar options={["all",...S]} active={filter} onChange={setFilter} countFn={s=>rxs.filter(r=>r.status===s).length} activeColor="#6c5ce7" />
       <div style={{ background:"#1a1d27", borderRadius:14, border:"1px solid #2a2d3a", overflow:"hidden" }}>
-        {loading ? <div style={{ padding:40, textAlign:"center", color:"#636e72" }}>Loading...</div> : (
+        {loading ? (
+          <div style={{ padding:40, textAlign:"center", color:"#636e72" }}>Loading...</div>
+        ) : (
           <DataTable
             cols={["ID","Patient","Phone","Date","Notes","Image","Status","Action"]}
             rows={filtered.map(rx => [
@@ -403,12 +510,18 @@ function Prescriptions({ toast }) {
               rx.customer_phone,
               new Date(rx.uploaded_at).toLocaleDateString(),
               <span style={{ maxWidth:110, display:"block", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", color:"#a0a8b8" }}>{rx.notes||"—"}</span>,
-              rx.image ? (
-                <button onClick={() => setViewImg(rx.image.startsWith("http")?rx.image:"http://localhost:8000"+rx.image)}
-                  style={{ background:"#6c5ce722", border:"none", borderRadius:6, padding:"4px 8px", color:"#a29bfe", cursor:"pointer", fontSize:11, fontWeight:600, display:"flex", alignItems:"center", gap:3 }}>
-                  <Icon n="eye" s={11} c="#a29bfe" /> View
+              <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
+                {rx.image && (
+                  <button onClick={() => setViewImg(mediaUrl(rx.image))}
+                    style={{ background:"#6c5ce722", border:"none", borderRadius:6, padding:"4px 8px", color:"#a29bfe", cursor:"pointer", fontSize:11, fontWeight:600, display:"flex", alignItems:"center", gap:3 }}>
+                    <Icon n="eye" s={11} c="#a29bfe" /> View
+                  </button>
+                )}
+                <button onClick={() => setEditRx(rx)}
+                  style={{ background:"#fdcb6e22", border:"none", borderRadius:6, padding:"4px 8px", color:"#fdcb6e", cursor:"pointer", fontSize:11, fontWeight:600, display:"flex", alignItems:"center", gap:3 }}>
+                  <Icon n="edit" s={11} c="#fdcb6e" /> {rx.image ? "Change" : "Upload"}
                 </button>
-              ) : <span style={{ color:"#444" }}>No img</span>,
+              </div>,
               <Badge status={rx.status} />,
               <StatusSelect value={rx.status} options={S} onChange={v=>updateStatus(rx.id,v)} />
             ])}
@@ -419,6 +532,13 @@ function Prescriptions({ toast }) {
         <Modal title="Prescription Image" onClose={() => setViewImg(null)}>
           <img src={viewImg} alt="rx" style={{ width:"100%", borderRadius:10, maxHeight:480, objectFit:"contain" }} />
         </Modal>
+      )}
+      {editRx && (
+        <RxImageModal
+          rx={editRx} toast={toast}
+          onClose={() => setEditRx(null)}
+          onSaved={updated => setRxs(r => r.map(x => x.id===updated.id ? updated : x))}
+        />
       )}
     </div>
   );
@@ -432,8 +552,18 @@ function Consultations({ toast }) {
   const S    = ["requested","confirmed","completed","cancelled"];
   const DOCS = { general:"👨‍⚕️ General", cardiology:"❤️ Cardiology", neurology:"🧠 Neurology", dentist:"🦷 Dentist", dermatology:"🌿 Derma" };
 
-  async function load() { setLoading(true); const d=await get("/consultations/"); setConsults(Array.isArray(d)?d:d.results||[]); setLoading(false); }
-  useEffect(() => { load(); const t=setInterval(load,30000); return ()=>clearInterval(t); }, []);
+  const load = useCallback(async () => {
+    setLoading(true);
+    const d = await get("/consultations/");
+    setConsults(Array.isArray(d)?d:d.results||[]);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    load();
+    const t = setInterval(load, 30000);
+    return () => clearInterval(t);
+  }, [load]);
 
   async function updateStatus(id, status) {
     const d = await patch("/consultations/"+id+"/", { status });
@@ -477,28 +607,57 @@ function Medicines({ toast }) {
   const [showAdd, setShowAdd] = useState(false);
   const [editMed, setEditMed] = useState(null);
   const [form,    setForm]    = useState(MED_EMPTY);
+  const [imgFile, setImgFile] = useState(null);
+  const [imgPrev, setImgPrev] = useState(null);
+  const medFileRef = useRef(null);
   const f = (k, v) => setForm(p => ({...p, [k]:v}));
 
-  async function load() {
+  function onMedImgChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImgFile(file);
+    const reader = new FileReader();
+    reader.onload = ev => setImgPrev(ev.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  const load = useCallback(async () => {
     setLoading(true);
     const [d,c] = await Promise.all([get("/medicines/"),get("/categories/")]);
     setMeds(Array.isArray(d)?d:d.results||[]);
     setCats(Array.isArray(c)?c:c.results||[]);
     setLoading(false);
-  }
-  useEffect(() => { load(); }, []);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   function openEdit(m) {
     setForm({ name:m.name, brand:m.brand||"", category:m.category||"", price:m.price, mrp:m.mrp||"", stock:m.stock, description:m.description||"", requires_prescription:m.requires_prescription||false, discount_percent:m.discount_percent||0 });
+    setImgFile(null);
+    // ✅ FIX 2 — mediaUrl helper use kiya
+    setImgPrev(mediaUrl(m.image));
     setEditMed(m); setShowAdd(true);
+  }
+
+  function openAdd() {
+    setForm(MED_EMPTY); setEditMed(null);
+    setImgFile(null); setImgPrev(null);
+    setShowAdd(true);
   }
 
   async function save() {
     if (!form.name || !form.price || form.stock==="") return toast("Name, price, stock required","error");
-    const body = { ...form, price:parseFloat(form.price), mrp:parseFloat(form.mrp)||parseFloat(form.price), stock:parseInt(form.stock), discount_percent:parseInt(form.discount_percent)||0 };
-    const d = editMed ? await patch("/medicines/"+editMed.id+"/", body) : await post("/medicines/", body);
-    if (d.id) { toast(editMed?"Updated!":"Added!","success"); setShowAdd(false); setEditMed(null); setForm(MED_EMPTY); load(); }
-    else toast("Failed: "+JSON.stringify(d),"error");
+    try {
+      const fd = new FormData();
+      Object.entries({...form, price:parseFloat(form.price), mrp:parseFloat(form.mrp)||parseFloat(form.price), stock:parseInt(form.stock), discount_percent:parseInt(form.discount_percent)||0})
+        .forEach(([k,v]) => fd.append(k, v));
+      if (imgFile) fd.append("image", imgFile);
+      const url = API+"/medicines/"+(editMed ? editMed.id+"/" : "");
+      const res = await fetch(url, { method: editMed?"PATCH":"POST", body:fd });
+      const d   = await res.json();
+      if (d.id) { toast(editMed?"Updated!":"Added!","success"); setShowAdd(false); setEditMed(null); setForm(MED_EMPTY); setImgFile(null); setImgPrev(null); load(); }
+      else toast("Failed: "+JSON.stringify(d),"error");
+    } catch(err) { toast("Error: "+err.message,"error"); }
   }
 
   const filtered = meds.filter(m => !search || (m.name||"").toLowerCase().includes(search.toLowerCase()) || (m.brand||"").toLowerCase().includes(search.toLowerCase()));
@@ -507,7 +666,7 @@ function Medicines({ toast }) {
     <div>
       <PageHeader title="💊 Medicines" sub={meds.length+" medicines"} onRefresh={load}
         action={
-          <button onClick={() => { setForm(MED_EMPTY); setEditMed(null); setShowAdd(true); }}
+          <button onClick={openAdd}
             style={{ background:"linear-gradient(135deg,#00b894,#00cec9)", border:"none", borderRadius:9, padding:"8px 14px", color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", gap:5, fontSize:12, fontWeight:700 }}>
             <Icon n="plus" s={13} /> Add Medicine
           </button>
@@ -542,7 +701,7 @@ function Medicines({ toast }) {
       </div>
 
       {showAdd && (
-        <Modal title={editMed?"Edit Medicine":"Add Medicine"} onClose={() => { setShowAdd(false); setEditMed(null); }}>
+        <Modal title={editMed?"Edit Medicine":"Add Medicine"} onClose={() => { setShowAdd(false); setEditMed(null); setImgFile(null); setImgPrev(null); }}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 14px" }}>
             <Inp label="Name"       value={form.name}             onChange={v=>f("name",v)}             required />
             <Inp label="Brand"      value={form.brand}            onChange={v=>f("brand",v)} />
@@ -564,9 +723,39 @@ function Medicines({ toast }) {
             <textarea value={form.description} onChange={e=>f("description",e.target.value)} rows={3}
               style={{ width:"100%", padding:"10px 13px", background:"#0f1117", border:"1px solid #2a2d3a", borderRadius:10, color:"#fff", fontSize:13, outline:"none", resize:"none", boxSizing:"border-box" }} />
           </div>
-          <div style={{ display:"flex", alignItems:"center", gap:9, marginBottom:20 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:9, marginBottom:16 }}>
             <input type="checkbox" id="rxchk" checked={form.requires_prescription} onChange={e=>f("requires_prescription",e.target.checked)} style={{ width:16, height:16, cursor:"pointer" }} />
             <label htmlFor="rxchk" style={{ color:"#d0d8e8", fontSize:13, cursor:"pointer" }}>Requires Prescription (Rx)</label>
+          </div>
+          <div style={{ marginBottom:18 }}>
+            <label style={{ color:"#a0a8b8", fontSize:11, fontWeight:700, display:"block", marginBottom:6, letterSpacing:.5 }}>MEDICINE IMAGE</label>
+            <div
+              onClick={() => medFileRef.current && medFileRef.current.click()}
+              style={{ background:"#0f1117", border:"2px dashed "+(imgFile?"#00b894":"#2a2d3a"), borderRadius:11, cursor:"pointer", textAlign:"center", overflow:"hidden", padding:imgPrev?0:28, transition:"border-color .2s" }}
+              onMouseEnter={e => e.currentTarget.style.borderColor="#00b894"}
+              onMouseLeave={e => e.currentTarget.style.borderColor=(imgFile?"#00b894":"#2a2d3a")}
+            >
+              {imgPrev ? (
+                <div style={{ position:"relative" }}>
+                  <img src={imgPrev} alt="preview" style={{ width:"100%", maxHeight:180, objectFit:"contain", display:"block", borderRadius:9 }} />
+                  <div style={{ position:"absolute", bottom:6, right:8, background:"rgba(0,0,0,.65)", borderRadius:7, padding:"3px 10px", color:"#fff", fontSize:11, fontWeight:600 }}>🔄 Click to change</div>
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontSize:28, marginBottom:6 }}>🖼️</div>
+                  <div style={{ color:"#a0a8b8", fontSize:12, fontWeight:600 }}>Click to upload image</div>
+                  <div style={{ color:"#636e72", fontSize:11, marginTop:3 }}>JPG, PNG, WEBP</div>
+                </>
+              )}
+            </div>
+            <input ref={medFileRef} type="file" accept="image/*" onChange={onMedImgChange} style={{ display:"none" }} />
+            {imgFile && (
+              <div style={{ display:"flex", alignItems:"center", gap:7, marginTop:8, background:"#00b89422", border:"1px solid #00b89444", borderRadius:8, padding:"6px 11px" }}>
+                <span>✅</span>
+                <span style={{ color:"#00b894", fontSize:12, fontWeight:600 }}>{imgFile.name}</span>
+                <span style={{ color:"#636e72", fontSize:11, marginLeft:"auto" }}>{(imgFile.size/1024).toFixed(1)} KB</span>
+              </div>
+            )}
           </div>
           <button onClick={save} style={{ width:"100%", padding:13, background:"linear-gradient(135deg,#00b894,#00cec9)", border:"none", borderRadius:11, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
             <Icon n="save" s={15} /> {editMed?"Update Medicine":"Add Medicine"}
@@ -585,8 +774,14 @@ function Categories({ toast }) {
   const [form,    setForm]    = useState({ name:"", slug:"", icon:"💊", description:"" });
   const f = (k, v) => setForm(p => ({...p, [k]:v}));
 
-  async function load() { setLoading(true); const d=await get("/categories/"); setCats(Array.isArray(d)?d:d.results||[]); setLoading(false); }
-  useEffect(() => { load(); }, []);
+  const load = useCallback(async () => {
+    setLoading(true);
+    const d = await get("/categories/");
+    setCats(Array.isArray(d)?d:d.results||[]);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   async function save() {
     if (!form.name || !form.slug) return toast("Name and slug required","error");
@@ -638,8 +833,14 @@ function Offers({ toast }) {
   const [form,    setForm]    = useState({ title:"", subtitle:"", code:"", discount_percent:0, emoji:"🎉", color:"#00b894" });
   const f = (k, v) => setForm(p => ({...p, [k]:v}));
 
-  async function load() { setLoading(true); const d=await get("/offers/"); setOffers(Array.isArray(d)?d:d.results||[]); setLoading(false); }
-  useEffect(() => { load(); }, []);
+  const load = useCallback(async () => {
+    setLoading(true);
+    const d = await get("/offers/");
+    setOffers(Array.isArray(d)?d:d.results||[]);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   async function save() {
     if (!form.title) return toast("Title required","error");
@@ -708,7 +909,6 @@ const PAGES = [
   { id:"offers",     label:"Offers",        icon:"tag",       color:"#fdcb6e" },
 ];
 
-/* ── Sidebar Nav Item ── */
 function NavItem({ p, activePage, setPage, showLabels, onNavigate, stats }) {
   const active = activePage === p.id;
   const badge  = p.id==="rx" ? stats?.pendingRx : p.id==="consults" ? stats?.pendingConsults : null;
@@ -745,13 +945,11 @@ function NavItem({ p, activePage, setPage, showLabels, onNavigate, stats }) {
   );
 }
 
-/* ── Desktop/Tablet Sidebar ── */
 function Sidebar({ page, setPage, onLogout, stats, collapsed, onToggle }) {
   const w = collapsed ? 56 : 220;
   const showLabels = !collapsed;
   return (
     <aside style={{ width:w, minHeight:"100vh", background:"#13151e", borderRight:"1px solid #2a2d3a", flexShrink:0, transition:"width .22s ease", overflow:"hidden", display:"flex", flexDirection:"column" }}>
-      {/* Header */}
       <div style={{ padding:showLabels?"20px 16px 14px":"14px 8px", borderBottom:"1px solid #2a2d3a", display:"flex", alignItems:"center", justifyContent:showLabels?"space-between":"center", flexShrink:0 }}>
         {showLabels && (
           <div style={{ display:"flex", alignItems:"center", gap:9, minWidth:0 }}>
@@ -769,11 +967,9 @@ function Sidebar({ page, setPage, onLogout, stats, collapsed, onToggle }) {
           <Icon n="chevron" s={14} />
         </button>
       </div>
-      {/* Nav */}
       <nav style={{ flex:1, padding:"10px 8px", overflowY:"auto" }}>
         {PAGES.map(p => <NavItem key={p.id} p={p} activePage={page} setPage={setPage} showLabels={showLabels} stats={stats} />)}
       </nav>
-      {/* Logout */}
       <div style={{ padding:"10px 8px", borderTop:"1px solid #2a2d3a", flexShrink:0 }}>
         <button onClick={onLogout} title={!showLabels?"Logout":undefined}
           style={{ width:"100%", display:"flex", alignItems:"center", gap:showLabels?10:0, justifyContent:showLabels?"flex-start":"center", padding:showLabels?"9px 12px":"10px", borderRadius:10, border:"none", cursor:"pointer", background:"transparent" }}
@@ -787,7 +983,6 @@ function Sidebar({ page, setPage, onLogout, stats, collapsed, onToggle }) {
   );
 }
 
-/* ── Mobile Drawer ── */
 function MobileDrawer({ page, setPage, onLogout, stats, open, onClose }) {
   return (
     <>
@@ -829,7 +1024,6 @@ function MobileDrawer({ page, setPage, onLogout, stats, open, onClose }) {
   );
 }
 
-/* ── Mobile Top Bar ── */
 function TopBar({ page, onMenu, stats }) {
   const p = PAGES.find(x => x.id===page) || PAGES[0];
   const total = (stats?.pendingRx||0) + (stats?.pendingConsults||0);
@@ -855,7 +1049,6 @@ function TopBar({ page, onMenu, stats }) {
   );
 }
 
-/* ── Mobile Bottom Nav ── */
 function BottomNav({ page, setPage, stats }) {
   const main = PAGES.slice(0, 5);
   return (
@@ -879,7 +1072,6 @@ function BottomNav({ page, setPage, stats }) {
   );
 }
 
-/* ── Page Map ── */
 const COMP_MAP = {
   dashboard:  Dashboard,
   orders:     Orders,
@@ -890,34 +1082,33 @@ const COMP_MAP = {
   offers:     Offers,
 };
 
-/* ── Root ── */
 export default function AdminApp() {
-  const [authed,      setAuthed]      = useState(() => localStorage.getItem("medi_admin") === "1");
-  const [page,        setPage]        = useState("dashboard");
-  const [stats,       setStats]       = useState({});
-  const [collapsed,   setCollapsed]   = useState(false);
-  const [drawerOpen,  setDrawerOpen]  = useState(false);
+  const [authed,     setAuthed]     = useState(() => localStorage.getItem("medi_admin") === "1");
+  const [page,       setPage]       = useState("dashboard");
+  const [stats,      setStats]      = useState({});
+  const [collapsed,  setCollapsed]  = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const { toasts, toast } = useToast();
-  const { isMobile, isTablet }        = useBreakpoint();
+  const { isMobile, isTablet } = useBreakpoint();
 
-  /* auto-collapse on tablet */
   useEffect(() => { if (isTablet) setCollapsed(true); }, [isTablet]);
 
-  /* poll badge counts */
-  useEffect(() => {
+  // ✅ FIX 4 — useCallback with authed dep
+  const loadStats = useCallback(async () => {
     if (!authed) return;
-    async function loadStats() {
-      try {
-        const [rxs, consults] = await Promise.all([get("/prescriptions/"), get("/consultations/")]);
-        const r = Array.isArray(rxs)     ? rxs     : rxs.results     || [];
-        const c = Array.isArray(consults) ? consults : consults.results || [];
-        setStats({ pendingRx: r.filter(x=>x.status==="pending").length, pendingConsults: c.filter(x=>x.status==="requested").length });
-      } catch(e) {}
-    }
+    try {
+      const [rxs, consults] = await Promise.all([get("/prescriptions/"), get("/consultations/")]);
+      const r = Array.isArray(rxs)     ? rxs     : rxs.results     || [];
+      const c = Array.isArray(consults) ? consults : consults.results || [];
+      setStats({ pendingRx: r.filter(x=>x.status==="pending").length, pendingConsults: c.filter(x=>x.status==="requested").length });
+    } catch(e) {}
+  }, [authed]);
+
+  useEffect(() => {
     loadStats();
     const t = setInterval(loadStats, 30000);
     return () => clearInterval(t);
-  }, [authed]);
+  }, [loadStats]);
 
   const login  = () => { localStorage.setItem("medi_admin","1"); setAuthed(true); };
   const logout = () => { localStorage.removeItem("medi_admin");  setAuthed(false); };
@@ -950,27 +1141,19 @@ export default function AdminApp() {
     <>
       <style>{CSS}</style>
       <div style={{ display:"flex", height:"100vh", background:"#0f1117", overflow:"hidden", maxWidth:"100vw", position:"relative" }}>
-
-        {/* Desktop / Tablet sidebar */}
         {!isMobile && (
           <Sidebar page={page} setPage={setPage} onLogout={logout} stats={stats}
             collapsed={collapsed} onToggle={() => setCollapsed(c => !c)} />
         )}
-
-        {/* Mobile drawer */}
         {isMobile && (
           <MobileDrawer page={page} setPage={setPage} onLogout={logout} stats={stats}
             open={drawerOpen} onClose={() => setDrawerOpen(false)} />
         )}
-
-        {/* Content column */}
         <div style={{ flex:1, display:"flex", flexDirection:"column", minWidth:0, overflow:"hidden" }}>
           {isMobile && <TopBar page={page} onMenu={() => setDrawerOpen(true)} stats={stats} />}
-
           <main style={{ flex:1, overflowY:"auto", padding:isMobile?"16px 14px 80px":"24px 28px", WebkitOverflowScrolling:"touch" }}>
             <PageComp toast={toast} />
           </main>
-
           {isMobile && <BottomNav page={page} setPage={setPage} stats={stats} />}
         </div>
       </div>
