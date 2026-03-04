@@ -9,6 +9,7 @@ urlpatterns = [
     path("api/", include("pharmacy.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
+# React app — production mein serve karo
 if not settings.DEBUG:
     urlpatterns += [
         re_path(r"^.*$", TemplateView.as_view(template_name="index.html")),
