@@ -1,17 +1,17 @@
-"""
-MediRun – Django Settings
-"""
+
 import os
 from pathlib import Path
 from datetime import timedelta
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "django-insecure-medirun-change-this-in-production"
+# ─── Security ─────────────────────────────────────────────────────────────────
+SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-medirun-change-this-in-production")
 
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost 127.0.0.1").split(" ")
 
 # ─── Apps ─────────────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
@@ -32,6 +32,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",       
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -45,7 +46,10 @@ ROOT_URLCONF = "Medicine.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [
+            BASE_DIR / "templates",
+            BASE_DIR / "static" / "frontend",   # ← React index.html
+        ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -61,14 +65,21 @@ TEMPLATES = [
 WSGI_APPLICATION = "Medicine.wsgi.application"
 
 # ─── Database ─────────────────────────────────────────────────────────────────
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if DATABASE_URL:
+    # Render PostgreSQL (production)
+    DATABASES = {
+        "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
-}
-
-
+else:
+    # Local SQLite
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # ─── Password Validators ──────────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
@@ -98,25 +109,32 @@ SIMPLE_JWT = {
 }
 
 # ─── CORS ─────────────────────────────────────────────────────────────────────
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
-]
+CORS_ALLOWED_ORIGINS = os.environ.get(
+    "CORS_ALLOWED_ORIGINS",
+    "http://localhost:3000 http://localhost:5173 http://127.0.0.1:5173"
+).split(" ")
+
 CORS_ALLOW_CREDENTIALS = True
 
 # ─── Media & Static ───────────────────────────────────────────────────────────
-MEDIA_URL = "/media/"
+MEDIA_URL  = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-STATIC_URL = "/static/"
+STATIC_URL  = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static" / "frontend",   # ← React build files
+]
+
+# Whitenoise — static files
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+WHITENOISE_INDEX_FILE = True
 
 # ─── Internationalisation ─────────────────────────────────────────────────────
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "Asia/Kolkata"
-USE_I18N = True
-USE_TZ = True
+TIME_ZONE     = "Asia/Kolkata"
+USE_I18N      = True
+USE_TZ        = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
