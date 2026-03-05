@@ -6,8 +6,6 @@ cd /opt/render/project/src/Frontend/Medicine
 npm install
 npm run build
 
-# Built files ko Django static mein copy karo
-cp -r dist/* /opt/render/project/src/Backends/Medicine/static/frontend/
 
 # ── Backend ──
 cd /opt/render/project/src/Backends/Medicine
