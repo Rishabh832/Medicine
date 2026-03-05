@@ -623,7 +623,7 @@ function Medicines({ toast }) {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [d,c] = await Promise.all([get("/medicines/"),get("/categories/")]);
+    const [d,c] = await Promise.all([get("/medicines/?admin=1"), get("/categories/")]);
     setMeds(Array.isArray(d)?d:d.results||[]);
     setCats(Array.isArray(c)?c:c.results||[]);
     setLoading(false);

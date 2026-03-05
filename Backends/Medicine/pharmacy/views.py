@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser, FormParser, JSONParser  # ✅ FIX 1 — duplicate import hataya
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db.models import Q, F
 
 from .models import (
@@ -24,21 +24,28 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class MedicineViewSet(viewsets.ModelViewSet):
-    queryset = Medicine.objects.filter(is_active=True).select_related("category")
     serializer_class = MedicineSerializer
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        qs = Medicine.objects.all().select_related("category")
+
+        # Admin panel se request hai to sab medicines dikhao (active + inactive)
+        is_admin = self.request.query_params.get("admin")
+        if not is_admin:
+            qs = qs.filter(is_active=True)
+
         search   = self.request.query_params.get("q")
         category = self.request.query_params.get("category")
         rx       = self.request.query_params.get("rx")
+
         if search:
             qs = qs.filter(Q(name__icontains=search) | Q(brand__icontains=search))
         if category:
             qs = qs.filter(category__slug=category)
         if rx is not None:
             qs = qs.filter(requires_prescription=(rx.lower() == "true"))
+
         return qs
 
 
@@ -116,7 +123,6 @@ class AddCartItemView(APIView):
             CartItem.objects.filter(cart=cart, medicine=medicine).delete()
             return Response(CartSerializer(cart, context={"request": request}).data)
 
-        # ✅ FIX 2 — stock check cart mein add karte waqt
         if quantity > medicine.stock:
             return Response(
                 {"detail": f"Only {medicine.stock} unit(s) available in stock."},
@@ -138,7 +144,10 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         phone = self.request.query_params.get("phone")
+        is_admin = self.request.query_params.get("admin")
         qs = Order.objects.prefetch_related("items__medicine")
+        if is_admin:
+            return qs.all()
         if phone:
             return qs.filter(customer_phone=phone)
         return qs.none()
@@ -161,7 +170,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         if not cart.items.exists():
             return Response({"detail": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # ✅ FIX 3 — order place karne se pehle stock validate karo
         out_of_stock = []
         for item in cart.items.select_related("medicine"):
             if item.medicine.stock < item.quantity:
