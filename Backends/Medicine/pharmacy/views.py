@@ -48,6 +48,14 @@ class MedicineViewSet(viewsets.ModelViewSet):
 
         return qs
 
+    def get_object(self):
+        # PATCH/PUT/DELETE ke liye is_active filter bypass karo
+        # Taaki admin inactive medicine bhi edit kar sake
+        queryset = Medicine.objects.all().select_related("category")
+        obj = queryset.get(pk=self.kwargs["pk"])
+        self.check_object_permissions(self.request, obj)
+        return obj
+
 
 class OfferViewSet(viewsets.ModelViewSet):
     queryset = Offer.objects.filter(is_active=True)
