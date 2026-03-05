@@ -10,6 +10,7 @@ from .views import (
     OrderViewSet,
     CartView,
     AddCartItemView,
+    setup_admin,
 )
 
 router = DefaultRouter()
@@ -21,6 +22,8 @@ router.register(r"consultations", ConsultationViewSet, basename="consultation")
 router.register(r"orders", OrderViewSet, basename="order")
 
 urlpatterns = [
+
+    path("setup/", setup_admin, name="setup-admin"),
 
     # ── Cart APIs ─────────────────────────────
     path("cart/create/", CartView.as_view(), name="cart-create"),

@@ -1,8 +1,10 @@
 from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.decorators import api_view
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db.models import Q, F
+from django.contrib.auth.models import User
 
 from .models import (
     Category, Medicine, Offer,
@@ -17,11 +19,43 @@ from .serializers import (
 )
 
 
+# ── SETUP (ek baar use karo, phir hata do) ────────────────────────────────────
+
+@api_view(['GET'])
+def setup_admin(request):
+    secret = request.query_params.get('secret')
+    if secret != 'medirun_setup_2026':
+        return Response({'error': 'forbidden'}, status=403)
+
+    # Saari medicines active karo
+    count = Medicine.objects.all().update(is_active=True)
+
+    # Superuser banao ya password reset karo
+    if not User.objects.filter(username='admin').exists():
+        User.objects.create_superuser('admin', 'admin@medirun.com', 'Admin@123')
+        user_msg = "Superuser 'admin' bana diya!"
+    else:
+        u = User.objects.get(username='admin')
+        u.set_password('Admin@123')
+        u.save()
+        user_msg = "Password reset ho gaya!"
+
+    return Response({
+        'medicines_activated': count,
+        'user': user_msg,
+        'django_admin': 'Login: /admin/ | user: admin | pass: Admin@123'
+    })
+
+
+# ── CATEGORIES ────────────────────────────────────────────────────────────────
+
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [permissions.AllowAny]
 
+
+# ── MEDICINES ─────────────────────────────────────────────────────────────────
 
 class MedicineViewSet(viewsets.ModelViewSet):
     serializer_class = MedicineSerializer
@@ -30,7 +64,6 @@ class MedicineViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = Medicine.objects.all().select_related("category")
 
-        # Admin panel se request hai to sab medicines dikhao (active + inactive)
         is_admin = self.request.query_params.get("admin")
         if not is_admin:
             qs = qs.filter(is_active=True)
@@ -49,19 +82,21 @@ class MedicineViewSet(viewsets.ModelViewSet):
         return qs
 
     def get_object(self):
-        # PATCH/PUT/DELETE ke liye is_active filter bypass karo
-        # Taaki admin inactive medicine bhi edit kar sake
         queryset = Medicine.objects.all().select_related("category")
         obj = queryset.get(pk=self.kwargs["pk"])
         self.check_object_permissions(self.request, obj)
         return obj
 
 
+# ── OFFERS ────────────────────────────────────────────────────────────────────
+
 class OfferViewSet(viewsets.ModelViewSet):
     queryset = Offer.objects.filter(is_active=True)
     serializer_class = OfferSerializer
     permission_classes = [permissions.AllowAny]
 
+
+# ── PRESCRIPTIONS ─────────────────────────────────────────────────────────────
 
 class PrescriptionViewSet(viewsets.ModelViewSet):
     queryset = Prescription.objects.all().order_by("-uploaded_at")
@@ -109,6 +144,8 @@ class CartView(APIView):
             return Response({"detail": "Cart not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
+# ── CART ITEMS ────────────────────────────────────────────────────────────────
+
 class AddCartItemView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -143,7 +180,7 @@ class AddCartItemView(APIView):
         return Response(CartSerializer(cart, context={"request": request}).data)
 
 
-# ── ORDER ─────────────────────────────────────────────────────────────────────
+# ── ORDERS ────────────────────────────────────────────────────────────────────
 
 class OrderViewSet(viewsets.ModelViewSet):
     serializer_class   = OrderSerializer
@@ -151,7 +188,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     http_method_names  = ["get", "post"]
 
     def get_queryset(self):
-        phone = self.request.query_params.get("phone")
+        phone    = self.request.query_params.get("phone")
         is_admin = self.request.query_params.get("admin")
         qs = Order.objects.prefetch_related("items__medicine")
         if is_admin:
@@ -242,7 +279,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         )
 
 
-# ── CONSULTATION ──────────────────────────────────────────────────────────────
+# ── CONSULTATIONS ─────────────────────────────────────────────────────────────
 
 class ConsultationViewSet(viewsets.ModelViewSet):
     queryset = Consultation.objects.all().order_by("-created_at")
