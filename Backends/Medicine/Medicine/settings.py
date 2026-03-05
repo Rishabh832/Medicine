@@ -31,6 +31,8 @@ INSTALLED_APPS = [
     "corsheaders",
     # Local
     "pharmacy",
+    "cloudinary",
+    "cloudinary_storage",
 ]
 
 MIDDLEWARE = [
@@ -149,3 +151,15 @@ USE_I18N      = True
 USE_TZ        = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# ─── Cloudinary ───────────────────────────────────────────────────────────────
+import cloudinary
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('dcrispfn7'),
+    'API_KEY': os.environ.get('734723636864287'),
+    'API_SECRET': os.environ.get('IcX2dp867ZBrLKYtoQOseq1zKbE'),
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
