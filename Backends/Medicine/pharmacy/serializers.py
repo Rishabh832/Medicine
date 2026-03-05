@@ -17,13 +17,35 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class MedicineSerializer(serializers.ModelSerializer):
     discount_percent = serializers.SerializerMethodField()
+    category_slug = serializers.SlugRelatedField(
+        source='category',
+        slug_field='slug',
+        queryset=Category.objects.all(),
+        required=False,
+        allow_null=True,
+        write_only=True
+    )
 
     class Meta:
         model = Medicine
         fields = "__all__"
+        extra_fields = ['category_slug']
 
     def get_discount_percent(self, obj):
         return obj.discount_percent()
+
+    def to_internal_value(self, data):
+        # category slug ko ID mein convert karo
+        data = data.copy() if hasattr(data, 'copy') else dict(data)
+        if 'category' in data and isinstance(data['category'], str):
+            try:
+                cat = Category.objects.get(slug=data['category'])
+                data['category'] = cat.id
+            except Category.DoesNotExist:
+                pass
+        # discount_percent write attempt ignore karo
+        data.pop('discount_percent', None)
+        return super().to_internal_value(data)
 
 
 # ─────────── OFFER ───────────
