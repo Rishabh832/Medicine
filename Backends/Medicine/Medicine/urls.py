@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
-from django.conf.urls.static import static
+from django.views.static import serve   # ← add karo
 from django.http import FileResponse, HttpResponse
 import os
 
@@ -20,18 +20,12 @@ def asset_view(request, path):
     if not os.path.exists(asset):
         asset = os.path.join(settings.STATIC_ROOT, "assets", path)
     if os.path.exists(asset):
-        if path.endswith(".js"):
-            ct = "application/javascript"
-        elif path.endswith(".css"):
-            ct = "text/css"
-        elif path.endswith(".svg"):
-            ct = "image/svg+xml"
-        elif path.endswith(".png"):
-            ct = "image/png"
-        elif path.endswith(".jpg") or path.endswith(".jpeg"):
-            ct = "image/jpeg"
-        else:
-            ct = "application/octet-stream"
+        if path.endswith(".js"):    ct = "application/javascript"
+        elif path.endswith(".css"): ct = "text/css"
+        elif path.endswith(".svg"): ct = "image/svg+xml"
+        elif path.endswith(".png"): ct = "image/png"
+        elif path.endswith(".jpg") or path.endswith(".jpeg"): ct = "image/jpeg"
+        else: ct = "application/octet-stream"
         return FileResponse(open(asset, "rb"), content_type=ct)
     return HttpResponse("Not found", status=404)
 
@@ -40,7 +34,10 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("pharmacy.urls")),
     path("assets/<path:path>", asset_view),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + [  # ✅ media pehle
+
+
+    path("media/<path:path>", serve, {"document_root": settings.MEDIA_ROOT}),
+
     path("", spa_view),
     path("<path:path>", spa_view),
 ]
