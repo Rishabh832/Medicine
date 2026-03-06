@@ -24,16 +24,15 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    # ✅ FIX — cloudinary_storage PEHLE hona chahiye staticfiles se
-    "cloudinary_storage",
     "django.contrib.staticfiles",
     # Third-party
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
-    "cloudinary",
     # Local
     "pharmacy",
+    "cloudinary",
+    "cloudinary_storage",
 ]
 
 MIDDLEWARE = [
