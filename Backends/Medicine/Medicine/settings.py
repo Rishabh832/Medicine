@@ -29,10 +29,10 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
-    # Local
-    "pharmacy",
     "cloudinary",
     "cloudinary_storage",
+    # Local
+    "pharmacy",
 ]
 
 MIDDLEWARE = [
@@ -124,6 +124,9 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 
 # ─── Media & Static ───────────────────────────────────────────────────────────
+MEDIA_URL  = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 STATIC_URL  = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
@@ -137,14 +140,6 @@ else:
 
 WHITENOISE_INDEX_FILE = True
 
-# ─── Internationalisation ─────────────────────────────────────────────────────
-LANGUAGE_CODE = "en-us"
-TIME_ZONE     = "Asia/Kolkata"
-USE_I18N      = True
-USE_TZ        = True
-
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
 # ─── Cloudinary ───────────────────────────────────────────────────────────────
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
@@ -153,3 +148,11 @@ CLOUDINARY_STORAGE = {
 }
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# ─── Internationalisation ─────────────────────────────────────────────────────
+LANGUAGE_CODE = "en-us"
+TIME_ZONE     = "Asia/Kolkata"
+USE_I18N      = True
+USE_TZ        = True
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
