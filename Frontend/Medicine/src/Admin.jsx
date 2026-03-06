@@ -1,17 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
 /* ── API helpers ── */
-// ✅ FIX 1 — API URL relative rakha (localhost hardcode production mein kaam nahi karta)
 const API   = "/api";
 const get   = (u)    => fetch(API+u).then(r=>r.json());
 const post  = (u,b)  => fetch(API+u,{method:"POST",  headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}).then(r=>r.json());
 const patch = (u,b)  => fetch(API+u,{method:"PATCH", headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}).then(r=>r.json());
 
-// ✅ FIX 2 — Image URL helper (localhost:8000 hardcode hataya)
 function mediaUrl(path) {
   if (!path) return null;
   if (path.startsWith("http")) return path;
-  return path; // Django already returns relative media URLs
+  return path;
 }
 
 /* ── Breakpoint hook ── */
@@ -264,13 +262,10 @@ function FilterBar({ options, active, onChange, countFn, activeColor="#0984e3" }
 /* ── Dashboard ── */
 function Dashboard({ toast }) {
   const [stats,   setStats]   = useState({});
-  const [recent,  setRecent]  = useState([]);
   const [pendRx,  setPendRx]  = useState([]);
   const [loading, setLoading] = useState(true);
   const { isMobile } = useBreakpoint();
 
-  // ✅ FIX 3 — Dashboard orders: admin mein sabhi orders chahiye
-  // Backend mein phone filter hai, isliye admin ke liye alag approach
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -332,13 +327,9 @@ function Orders({ toast }) {
   const [filter,  setFilter]  = useState("all");
   const S = ["placed","confirmed","packed","dispatched","delivered","cancelled"];
 
-  // ✅ FIX 3 — Orders: backend phone filter bypass karne ke liye Django admin API use karo
-  // Ya backend mein admin access add karo. Abhi ke liye note karo:
-  // views.py mein OrderViewSet.get_queryset() mein phone=None hone par qs.none() return hota hai
-  // Admin ke liye backend mein ek alag endpoint banana hoga ya JWT auth add karna hoga
   const load = useCallback(async () => {
     setLoading(true);
-    const d = await get("/orders/?admin=1");  // backend mein admin param support karo
+    const d = await get("/orders/?admin=1");
     setOrders(Array.isArray(d)?d:d.results||[]);
     setLoading(false);
   }, []);
@@ -379,7 +370,6 @@ function Orders({ toast }) {
 /* ── Image Upload Modal ── */
 function RxImageModal({ rx, onClose, onSaved, toast }) {
   const [imgFile, setImgFile] = useState(null);
-  // ✅ FIX 2 — mediaUrl helper use kiya
   const [imgPrev, setImgPrev] = useState(() => mediaUrl(rx.image));
   const [saving,  setSaving]  = useState(false);
   const fileRef = useRef(null);
@@ -443,14 +433,11 @@ function RxImageModal({ rx, onClose, onSaved, toast }) {
         </div>
       )}
       <div style={{ display:"flex", gap:10 }}>
-        <button
-          onClick={() => fileRef.current && fileRef.current.click()}
+        <button onClick={() => fileRef.current && fileRef.current.click()}
           style={{ flex:1, padding:11, background:"#2a2d3a", border:"none", borderRadius:10, color:"#d0d8e8", fontSize:13, fontWeight:600, cursor:"pointer" }}>
           📁 Browse
         </button>
-        <button
-          onClick={saveImage}
-          disabled={!imgFile || saving}
+        <button onClick={saveImage} disabled={!imgFile || saving}
           style={{ flex:2, padding:11, border:"none", borderRadius:10, fontSize:13, fontWeight:700,
             background: (!imgFile||saving) ? "#2a2d3a" : "linear-gradient(135deg,#6c5ce7,#a29bfe)",
             color:      (!imgFile||saving) ? "#636e72" : "#fff",
@@ -472,7 +459,6 @@ function Prescriptions({ toast }) {
   const [editRx,  setEditRx]  = useState(null);
   const S = ["pending","verified","rejected"];
 
-  // ✅ FIX 4 — useCallback with no deps (stable load function)
   const load = useCallback(async () => {
     setLoading(true);
     const d = await get("/prescriptions/");
@@ -598,7 +584,9 @@ function Consultations({ toast }) {
 }
 
 /* ── Medicines ── */
-const MED_EMPTY = { name:"", brand:"", category:"", price:"", mrp:"", stock:"", description:"", requires_prescription:false, discount_percent:0 };
+// ✅ FIX — rating aur is_active add kiya
+const MED_EMPTY = { name:"", brand:"", category:"", price:"", mrp:"", stock:"", description:"", requires_prescription:false, discount_percent:0, rating:"4.0", is_active:true };
+
 function Medicines({ toast }) {
   const [meds,    setMeds]    = useState([]);
   const [cats,    setCats]    = useState([]);
@@ -632,9 +620,20 @@ function Medicines({ toast }) {
   useEffect(() => { load(); }, [load]);
 
   function openEdit(m) {
-    setForm({ name:m.name, brand:m.brand||"", category:m.category||"", price:m.price, mrp:m.mrp||"", stock:m.stock, description:m.description||"", requires_prescription:m.requires_prescription||false, discount_percent:m.discount_percent||0 });
+    setForm({
+      name: m.name,
+      brand: m.brand||"",
+      category: m.category||"",
+      price: m.price,
+      mrp: m.mrp||"",
+      stock: m.stock,
+      description: m.description||"",
+      requires_prescription: m.requires_prescription||false,
+      discount_percent: m.discount_percent||0,
+      rating: m.rating||"4.0",        // ✅ rating
+      is_active: m.is_active !== undefined ? m.is_active : true,  // ✅ is_active
+    });
     setImgFile(null);
-    // ✅ FIX 2 — mediaUrl helper use kiya
     setImgPrev(mediaUrl(m.image));
     setEditMed(m); setShowAdd(true);
   }
@@ -649,14 +648,24 @@ function Medicines({ toast }) {
     if (!form.name || !form.price || form.stock==="") return toast("Name, price, stock required","error");
     try {
       const fd = new FormData();
-      Object.entries({...form, price:parseFloat(form.price), mrp:parseFloat(form.mrp)||parseFloat(form.price), stock:parseInt(form.stock), discount_percent:parseInt(form.discount_percent)||0})
-        .forEach(([k,v]) => fd.append(k, v));
+      Object.entries({
+        ...form,
+        price: parseFloat(form.price),
+        mrp: parseFloat(form.mrp)||parseFloat(form.price),
+        stock: parseInt(form.stock),
+        discount_percent: parseInt(form.discount_percent)||0,
+        rating: parseFloat(form.rating)||4.0,   // ✅ rating
+        is_active: true,                          // ✅ is_active hamesha true
+      }).forEach(([k,v]) => fd.append(k, v));
       if (imgFile) fd.append("image", imgFile);
       const url = API+"/medicines/"+(editMed ? editMed.id+"/" : "");
       const res = await fetch(url, { method: editMed?"PATCH":"POST", body:fd });
       const d   = await res.json();
-      if (d.id) { toast(editMed?"Updated!":"Added!","success"); setShowAdd(false); setEditMed(null); setForm(MED_EMPTY); setImgFile(null); setImgPrev(null); load(); }
-      else toast("Failed: "+JSON.stringify(d),"error");
+      if (d.id) {
+        toast(editMed?"Updated!":"Added!","success");
+        setShowAdd(false); setEditMed(null); setForm(MED_EMPTY);
+        setImgFile(null); setImgPrev(null); load();
+      } else toast("Failed: "+JSON.stringify(d),"error");
     } catch(err) { toast("Error: "+err.message,"error"); }
   }
 
@@ -682,7 +691,7 @@ function Medicines({ toast }) {
       <div style={{ background:"#1a1d27", borderRadius:14, border:"1px solid #2a2d3a", overflow:"hidden" }}>
         {loading ? <div style={{ padding:40, textAlign:"center", color:"#636e72" }}>Loading...</div> : (
           <DataTable
-            cols={["ID","Name","Brand","Price","MRP","Stock","Rx","Disc","Edit"]}
+            cols={["ID","Name","Brand","Price","MRP","Stock","Rating","Rx","Edit"]}
             rows={filtered.map(m => [
               <span style={{ color:"#00b894", fontWeight:700 }}>#{m.id}</span>,
               <span style={{ fontWeight:600 }}>{m.name}</span>,
@@ -690,8 +699,8 @@ function Medicines({ toast }) {
               <span style={{ color:"#ffeaa7", fontWeight:700 }}>₹{m.price}</span>,
               <span style={{ color:"#636e72", textDecoration:"line-through" }}>₹{m.mrp||m.price}</span>,
               <span style={{ color:m.stock>0?"#00b894":"#ff4757", fontWeight:700 }}>{m.stock}</span>,
+              <span style={{ color:"#fdcb6e", fontWeight:700 }}>⭐ {m.rating}</span>,
               m.requires_prescription ? <span style={{ color:"#e17055", fontSize:10, fontWeight:700 }}>YES</span> : <span style={{ color:"#444" }}>No</span>,
-              m.discount_percent>0 ? <span style={{ color:"#00b894", fontSize:10, fontWeight:700 }}>{m.discount_percent}%</span> : <span style={{ color:"#444" }}>—</span>,
               <button onClick={() => openEdit(m)} style={{ background:"#2a2d3a", border:"none", borderRadius:6, padding:"4px 7px", cursor:"pointer", color:"#a0a8b8", display:"flex" }}>
                 <Icon n="edit" s={12} />
               </button>
@@ -709,6 +718,8 @@ function Medicines({ toast }) {
             <Inp label="MRP (₹)"    value={form.mrp}              onChange={v=>f("mrp",v)}              type="number" />
             <Inp label="Stock"      value={form.stock}            onChange={v=>f("stock",v)}            type="number" required />
             <Inp label="Discount %" value={form.discount_percent} onChange={v=>f("discount_percent",v)} type="number" />
+            {/* ✅ Rating field add kiya */}
+            <Inp label="Rating (0-5)" value={form.rating}         onChange={v=>f("rating",v)}           type="number" placeholder="4.0" />
           </div>
           <div style={{ marginBottom:14 }}>
             <label style={{ color:"#a0a8b8", fontSize:11, fontWeight:700, display:"block", marginBottom:5 }}>CATEGORY</label>
@@ -1093,7 +1104,6 @@ export default function AdminApp() {
 
   useEffect(() => { if (isTablet) setCollapsed(true); }, [isTablet]);
 
-  // ✅ FIX 4 — useCallback with authed dep
   const loadStats = useCallback(async () => {
     if (!authed) return;
     try {
