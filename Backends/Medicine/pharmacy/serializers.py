@@ -17,6 +17,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class MedicineSerializer(serializers.ModelSerializer):
     discount_percent = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()  # ← YE ADD KARO
     category_slug = serializers.SlugRelatedField(
         source='category',
         slug_field='slug',
@@ -34,8 +35,20 @@ class MedicineSerializer(serializers.ModelSerializer):
     def get_discount_percent(self, obj):
         return obj.discount_percent()
 
+    def get_image(self, obj):  
+        if not obj.image:
+            return None
+        url = str(obj.image.url)
+        # Cloudinary URL already complete hoti hai
+        if url.startswith('http'):
+            return url
+        # Local URL ke liye request se absolute URL banao
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(url)
+        return url
+
     def to_internal_value(self, data):
-        # category slug ko ID mein convert karo
         data = data.copy() if hasattr(data, 'copy') else dict(data)
         if 'category' in data and isinstance(data['category'], str):
             try:
@@ -43,7 +56,6 @@ class MedicineSerializer(serializers.ModelSerializer):
                 data['category'] = cat.id
             except Category.DoesNotExist:
                 pass
-        # discount_percent write attempt ignore karo
         data.pop('discount_percent', None)
         return super().to_internal_value(data)
 
