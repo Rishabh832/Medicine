@@ -60,6 +60,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class MedicineViewSet(viewsets.ModelViewSet):
     serializer_class = MedicineSerializer
     permission_classes = [permissions.AllowAny]
+    parser_classes = [MultiPartParser, FormParser, JSONParser] 
 
     def get_queryset(self):
         qs = Medicine.objects.all().select_related("category")
