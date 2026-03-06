@@ -24,15 +24,16 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    # ✅ FIX — cloudinary_storage PEHLE hona chahiye staticfiles se
+    "cloudinary_storage",
     "django.contrib.staticfiles",
     # Third-party
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
+    "cloudinary",
     # Local
     "pharmacy",
-    "cloudinary",
-    "cloudinary_storage",
 ]
 
 MIDDLEWARE = [
@@ -124,19 +125,12 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 
 # ─── Media & Static ───────────────────────────────────────────────────────────
-MEDIA_URL  = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
-
 STATIC_URL  = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# ✅ FIX — sirf tab include karo jab folder exist kare
-# (pehli baar npm run build se pehle yeh folder nahi hota, jisse 500 error aata tha)
 _frontend_static = BASE_DIR / "static" / "frontend"
 STATICFILES_DIRS = [_frontend_static] if _frontend_static.exists() else []
 
-# ✅ FIX — local dev mein CompressedManifest use mat karo
-# (collectstatic ke baad hi yeh kaam karta hai, pehle nahi)
 if DEBUG:
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 else:
@@ -152,10 +146,7 @@ USE_TZ        = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
 # ─── Cloudinary ───────────────────────────────────────────────────────────────
-import cloudinary
-
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
     'API_KEY':    os.environ.get('CLOUDINARY_API_KEY'),
