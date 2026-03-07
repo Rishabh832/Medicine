@@ -127,7 +127,7 @@ function LoginPage({ onLogin }) {
           <div style={{ width:56, height:56, background:"linear-gradient(135deg,#00b894,#00cec9)", borderRadius:16, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}>
             <Icon n="pill" s={26} c="#fff" />
           </div>
-          <h1 style={{ color:"#fff", fontSize:22, fontWeight:800, margin:0 }}>MediRun Admin</h1>
+          <h1 style={{ color:"#fff", fontSize:22, fontWeight:800, margin:0 }}>Mediova Admin</h1>
           <p style={{ color:"#636e72", fontSize:12, marginTop:6, marginBottom:0 }}>Secure admin dashboard</p>
         </div>
         <label style={{ color:"#a0a8b8", fontSize:11, fontWeight:700, letterSpacing:1, display:"block", marginBottom:8 }}>ADMIN PASSWORD</label>
@@ -135,7 +135,7 @@ function LoginPage({ onLogin }) {
           style={{ width:"100%", padding:"13px 14px", background:"#0f1117", border:`2px solid ${err?"#ff4757":"#2a2d3a"}`, borderRadius:12, color:"#fff", fontSize:14, outline:"none", boxSizing:"border-box" }} />
         {err && <p style={{ color:"#ff4757", fontSize:12, marginTop:6 }}>Wrong password</p>}
         <button onClick={submit} style={{ width:"100%", marginTop:18, padding:13, background:"linear-gradient(135deg,#00b894,#00cec9)", border:"none", borderRadius:12, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer" }}>Login →</button>
-        <p style={{ color:"#3a3a3a", fontSize:11, textAlign:"center", marginTop:14, marginBottom:0 }}>Default: medirun@admin123</p>
+        <p style={{ color:"#3a3a3a", fontSize:11, textAlign:"center", marginTop:14, marginBottom:0 }}>Default: mediova</p>
       </div>
     </div>
   );
@@ -289,7 +289,7 @@ function Dashboard({ toast }) {
 
   return (
     <div>
-      <PageHeader title="📊 Dashboard" sub="MediRun overview" onRefresh={load} />
+      <PageHeader title="📊 Dashboard" sub="Mediova overview" onRefresh={load} />
       <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:12, marginBottom:24 }}>
         <StatCard label="Medicines"     value={stats.medicines}     icon="pill"  color="#00b894" />
         <StatCard label="Prescriptions" value={stats.prescriptions} icon="rx"    color="#6c5ce7" sub={stats.pendingRx+" pending"} />
@@ -299,7 +299,7 @@ function Dashboard({ toast }) {
       <div style={{ background:"#1a1d27", borderRadius:14, padding:20, border:"1px solid #2a2d3a" }}>
         <h3 style={{ color:"#fff", fontSize:14, fontWeight:700, marginBottom:14, marginTop:0 }}>📋 Pending Prescriptions</h3>
         {pendRx.length === 0 ? (
-          <p style={{ color:"#00b894", textAlign:"center", padding:16, fontSize:12 }}>✅ Koi pending nahi!</p>
+          <p style={{ color:"#00b894", textAlign:"center", padding:16, fontSize:12 }}>✅ No pending</p>
         ) : pendRx.map(rx => (
           <div key={rx.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:"1px solid #2a2d3a" }}>
             <div>
@@ -862,7 +862,7 @@ function Sidebar({ page, setPage, onLogout, stats, collapsed, onToggle }) {
           <div style={{ display:"flex", alignItems:"center", gap:9, minWidth:0 }}>
             <div style={{ width:33, height:33, background:"linear-gradient(135deg,#00b894,#00cec9)", borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon n="pill" s={15} c="#fff" /></div>
             <div style={{ minWidth:0 }}>
-              <div style={{ color:"#fff", fontWeight:800, fontSize:14 }}>MediRun</div>
+              <div style={{ color:"#fff", fontWeight:800, fontSize:14 }}>Mediova</div>
               <div style={{ color:"#636e72", fontSize:9, fontWeight:600, letterSpacing:.5 }}>ADMIN PANEL</div>
             </div>
           </div>
@@ -893,7 +893,7 @@ function MobileDrawer({ page, setPage, onLogout, stats, open, onClose }) {
         <div style={{ padding:"18px 16px 14px", borderBottom:"1px solid #2a2d3a", display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
           <div style={{ display:"flex", alignItems:"center", gap:9 }}>
             <div style={{ width:32, height:32, background:"linear-gradient(135deg,#00b894,#00cec9)", borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center" }}><Icon n="pill" s={14} c="#fff" /></div>
-            <div><div style={{ color:"#fff", fontWeight:800, fontSize:14 }}>MediRun</div><div style={{ color:"#636e72", fontSize:9, fontWeight:600, letterSpacing:.5 }}>ADMIN PANEL</div></div>
+            <div><div style={{ color:"#fff", fontWeight:800, fontSize:14 }}>Mediova</div><div style={{ color:"#636e72", fontSize:9, fontWeight:600, letterSpacing:.5 }}>ADMIN PANEL</div></div>
           </div>
           <button onClick={onClose} style={{ background:"#2a2d3a", border:"none", borderRadius:7, padding:"5px 6px", cursor:"pointer", color:"#fff", display:"flex" }}><Icon n="x" s={15} /></button>
         </div>
@@ -924,7 +924,7 @@ function TopBar({ page, onMenu, stats }) {
         </button>
         <div style={{ display:"flex", alignItems:"center", gap:7 }}>
           <div style={{ width:27, height:27, background:"linear-gradient(135deg,#00b894,#00cec9)", borderRadius:7, display:"flex", alignItems:"center", justifyContent:"center" }}><Icon n="pill" s={12} c="#fff" /></div>
-          <span style={{ color:"#fff", fontWeight:800, fontSize:14 }}>MediRun</span>
+          <span style={{ color:"#fff", fontWeight:800, fontSize:14 }}>Mediova</span>
         </div>
       </div>
       <div style={{ display:"flex", alignItems:"center", gap:6 }}>
