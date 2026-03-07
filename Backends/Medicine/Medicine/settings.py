@@ -2,6 +2,7 @@
 Mediova – Django Settings
 """
 import os
+import sys
 from pathlib import Path
 from datetime import timedelta
 import dj_database_url
@@ -133,15 +134,12 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 _frontend_static = BASE_DIR / "static" / "frontend"
 STATICFILES_DIRS = [_frontend_static] if _frontend_static.exists() else []
 
-if DEBUG:
-    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
-else:
-    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-
 WHITENOISE_INDEX_FILE = True
 
 # ─── Cloudinary ───────────────────────────────────────────────────────────────
 import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 cloudinary.config(
     cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME'),
@@ -155,7 +153,16 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# ✅ Django 6.0 ke liye STORAGES dict use karo
+# DEFAULT_FILE_STORAGE aur STATICFILES_STORAGE deprecated ho gaye hain
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # ─── Internationalisation ─────────────────────────────────────────────────────
 LANGUAGE_CODE = "en-us"
@@ -165,8 +172,7 @@ USE_TZ        = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
-import sys
-print("=== STORAGE ===", DEFAULT_FILE_STORAGE, file=sys.stderr)
+# ─── Debug prints (deploy ke baad hata do) ────────────────────────────────────
+print("=== STORAGES ===", STORAGES["default"]["BACKEND"], file=sys.stderr)
 print("=== CLOUD_NAME ===", os.environ.get('CLOUDINARY_CLOUD_NAME'), file=sys.stderr)
 print("=== API_KEY ===", os.environ.get('CLOUDINARY_API_KEY'), file=sys.stderr)
