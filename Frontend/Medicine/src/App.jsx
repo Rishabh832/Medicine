@@ -8,7 +8,6 @@ const post = (url, body) =>
 const postForm = (url, fd) =>
   fetch(API + url, { method: "POST", body: fd }).then(r => r.json());
 
-// ✅ FIX — Image URL: dev mein Django ka port use karo, production mein same origin
 const getImgUrl = (path) => {
   if (!path) return null;
   if (path.startsWith("http")) return path;
@@ -16,7 +15,6 @@ const getImgUrl = (path) => {
   return `${base}${path}`;
 };
 
-// ✅ FIX 2 — useResponsive: MediaQueryList objects useRef mein rakhe (stale listener bug fix)
 const useResponsive = () => {
   const mobileQ = useRef(window.matchMedia("(max-width: 767px)"));
   const tabletQ = useRef(window.matchMedia("(min-width: 768px) and (max-width: 1023px)"));
@@ -27,10 +25,8 @@ const useResponsive = () => {
   useEffect(() => {
     const mq = mobileQ.current;
     const tq = tabletQ.current;
-
     const onMobile = (e) => setIsMobile(e.matches);
     const onTablet = (e) => setIsTablet(e.matches);
-
     mq.addEventListener("change", onMobile);
     tq.addEventListener("change", onTablet);
     return () => {
@@ -109,7 +105,7 @@ const UserModal = ({ onSave }) => {
   const [phone, setPhone] = useState("");
   const inp = { width:"100%", padding:"13px 16px", border:"2px solid #e8ecf0", borderRadius:12, fontSize:15, outline:"none", boxSizing:"border-box", transition:"border-color .2s", background:"#f8fafc" };
   return (
-    <div style={{ position:"fixed", inset:0, background:"linear-gradient(135deg,#00b894cc,#0984e3cc)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:10000, padding:20 }}>
+    <div style={{ position:"fixed", inset:0, background:"linear-gradient(135deg,#0077b6cc,#0984e3cc)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:10000, padding:20 }}>
       <div style={{ background:"#fff", borderRadius:24, padding:36, width:"100%", maxWidth:400, boxShadow:"0 32px 80px rgba(0,0,0,.25)" }}>
         <div style={{ textAlign:"center", marginBottom:32 }}>
           <div style={{ margin:"0 auto 16px", width:90, height:90 }}>
@@ -122,17 +118,17 @@ const UserModal = ({ onSave }) => {
           <div>
             <label style={{ fontSize:13, fontWeight:700, color:"#4a5568", display:"block", marginBottom:6, letterSpacing:.3 }}>FULL NAME</label>
             <input value={name} onChange={e=>setName(e.target.value)} placeholder="Enter your name"
-              style={inp} onFocus={e=>e.target.style.borderColor="#00b894"} onBlur={e=>e.target.style.borderColor="#e8ecf0"}/>
+              style={inp} onFocus={e=>e.target.style.borderColor="#0077b6"} onBlur={e=>e.target.style.borderColor="#e8ecf0"}/>
           </div>
           <div>
             <label style={{ fontSize:13, fontWeight:700, color:"#4a5568", display:"block", marginBottom:6, letterSpacing:.3 }}>PHONE NUMBER</label>
             <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="10-digit mobile number" type="tel"
-              style={inp} onFocus={e=>e.target.style.borderColor="#00b894"} onBlur={e=>e.target.style.borderColor="#e8ecf0"}/>
+              style={inp} onFocus={e=>e.target.style.borderColor="#0077b6"} onBlur={e=>e.target.style.borderColor="#e8ecf0"}/>
           </div>
           <button onClick={()=>name&&phone&&onSave(name,phone)}
-            style={{ background:"linear-gradient(135deg,#00b894,#00cec9)", color:"#fff", border:"none", borderRadius:14, padding:16, fontSize:16, fontWeight:700, cursor:"pointer", marginTop:8, boxShadow:"0 6px 20px #00b89440", transition:"transform .15s, box-shadow .15s" }}
-            onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 10px 28px #00b89450"}}
-            onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="0 6px 20px #00b89440"}}>
+            style={{ background:"#0077b6", color:"#fff", border:"none", borderRadius:14, padding:16, fontSize:16, fontWeight:700, cursor:"pointer", marginTop:8, boxShadow:"0 6px 20px #0077b640", transition:"transform .15s, box-shadow .15s" }}
+            onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 10px 28px #0077b650"}}
+            onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="0 6px 20px #0077b640"}}>
             Get Started →
           </button>
         </div>
@@ -168,7 +164,7 @@ const MobileDrawer = ({ open, onClose, page, setPage, userName, userPhone, cartC
         display:"flex", flexDirection:"column", overflow:"hidden",
         boxShadow: open?"8px 0 40px rgba(0,0,0,.18)":"none"
       }}>
-        <div style={{ background:"linear-gradient(135deg,#00b894,#0984e3)", padding:"48px 24px 28px", position:"relative" }}>
+        <div style={{ background:"#0077b6", padding:"48px 24px 28px", position:"relative" }}>
           <button onClick={onClose} style={{ position:"absolute", top:16, right:16, background:"rgba(255,255,255,.2)", border:"none", borderRadius:10, width:36, height:36, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff" }}>
             <Icon name="x" size={18} color="#fff"/>
           </button>
@@ -195,25 +191,25 @@ const MobileDrawer = ({ open, onClose, page, setPage, userName, userPhone, cartC
               <button key={n.id} onClick={()=>goto(n.id)} style={{
                 display:"flex", alignItems:"center", gap:14, width:"100%", padding:"13px 14px",
                 borderRadius:14, border:"none", cursor:"pointer", marginBottom:4,
-                background: active ? "linear-gradient(135deg,#00b89415,#0984e315)" : "transparent",
+                background: active ? "#0077b615" : "transparent",
                 transition:"background .2s", textAlign:"left"
               }}
               onMouseEnter={e=>{ if(!active) e.currentTarget.style.background="#f8f9fa"; }}
               onMouseLeave={e=>{ if(!active) e.currentTarget.style.background="transparent"; }}>
                 <div style={{
                   width:42, height:42, borderRadius:12, flexShrink:0,
-                  background: active ? "linear-gradient(135deg,#00b894,#00cec9)" : "#f0f4f8",
+                  background: active ? "#0077b6" : "#f0f4f8",
                   display:"flex", alignItems:"center", justifyContent:"center",
-                  boxShadow: active ? "0 4px 12px #00b89440" : "none",
+                  boxShadow: active ? "0 4px 12px #0077b640" : "none",
                   transition:"all .2s"
                 }}>
                   <Icon name={n.icon} size={18} color={active?"#fff":"#636e72"}/>
                 </div>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:14, fontWeight:700, color: active?"#00b894":"#2d3436", marginBottom:1 }}>{n.label}</div>
+                  <div style={{ fontSize:14, fontWeight:700, color: active?"#0077b6":"#2d3436", marginBottom:1 }}>{n.label}</div>
                   <div style={{ fontSize:12, color:"#b2bec3", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{n.desc}</div>
                 </div>
-                {active && <Icon name="chevron" size={16} color="#00b894"/>}
+                {active && <Icon name="chevron" size={16} color="#0077b6"/>}
               </button>
             );
           })}
@@ -274,7 +270,7 @@ const Navbar = ({ page, setPage, cartCount, userName, userPhone, onLogout }) => 
           )}
 
           <div onClick={()=>setPage("home")} style={{ display:"flex", alignItems:"center", gap:10, cursor:"pointer", marginRight: isDesktop?40:16, flexShrink:0 }}>
-            <img src={logo} alt="Mediova" style={{ height: isMobile?50:63, width:"auto", objectFit:"contain", filter:"drop-shadow(0 2px 6px rgba(0,180,216,.25))" }}/>
+            <img src={logo} alt="Mediova" style={{ height: isMobile?50:63, width:"auto", objectFit:"contain", filter:"drop-shadow(0 2px 6px rgba(0,119,182,.25))" }}/>
           </div>
 
           {!isMobile && (
@@ -287,9 +283,9 @@ const Navbar = ({ page, setPage, cartCount, userName, userPhone, onLogout }) => 
                     padding: isTablet ? "8px 10px" : "9px 16px",
                     borderRadius:12, border:"none", cursor:"pointer",
                     fontSize: isTablet?12:13, fontWeight:600,
-                    background: active ? "linear-gradient(135deg,#00b894,#00cec9)" : "transparent",
+                    background: active ? "#0077b6" : "transparent",
                     color: active ? "#fff" : "#636e72",
-                    boxShadow: active ? "0 4px 12px #00b89440" : "none",
+                    boxShadow: active ? "0 4px 12px #0077b640" : "none",
                     transition:"all .2s", whiteSpace:"nowrap"
                   }}
                   onMouseEnter={e=>{ if(!active){ e.currentTarget.style.background="#f4f6f8"; e.currentTarget.style.color="#2d3436"; }}}
@@ -307,15 +303,15 @@ const Navbar = ({ page, setPage, cartCount, userName, userPhone, onLogout }) => 
           <div style={{ display:"flex", alignItems:"center", gap: isMobile?8:12, flexShrink:0 }}>
             {isDesktop && (
               <div style={{ display:"flex", alignItems:"center", gap:8, background:"#f4f6f8", borderRadius:12, padding:"8px 14px" }}>
-                <div style={{ width:28, height:28, borderRadius:8, background:"linear-gradient(135deg,#00b894,#00cec9)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:800, color:"#fff" }}>{initial}</div>
+                <div style={{ width:28, height:28, borderRadius:8, background:"#0077b6", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:800, color:"#fff" }}>{initial}</div>
                 <span style={{ fontSize:13, fontWeight:600, color:"#2d3436" }}>{userName}</span>
               </div>
             )}
             {isTablet && (
-              <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#00b894,#00cec9)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, fontWeight:800, color:"#fff" }}>{initial}</div>
+              <div style={{ width:36, height:36, borderRadius:10, background:"#0077b6", display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, fontWeight:800, color:"#fff" }}>{initial}</div>
             )}
 
-            <button onClick={()=>setPage("cart")} style={{ position:"relative", background:"linear-gradient(135deg,#00b894,#00cec9)", border:"none", borderRadius:12, padding: isMobile?"9px":"10px 16px", cursor:"pointer", display:"flex", alignItems:"center", gap:7, boxShadow:"0 4px 12px #00b89440" }}>
+            <button onClick={()=>setPage("cart")} style={{ position:"relative", background:"#0077b6", border:"none", borderRadius:12, padding: isMobile?"9px":"10px 16px", cursor:"pointer", display:"flex", alignItems:"center", gap:7, boxShadow:"0 4px 12px #0077b640" }}>
               <Icon name="cart" size={isMobile?18:17} color="#fff"/>
               {!isMobile && <span style={{ color:"#fff", fontSize:13, fontWeight:700 }}>Cart</span>}
               {cartCount>0 && <span style={{ position:"absolute", top:-7, right:-7, background:"#ff4757", color:"#fff", borderRadius:"50%", width:20, height:20, fontSize:11, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", border:"2px solid #fff" }}>{cartCount}</span>}
@@ -339,15 +335,15 @@ const Navbar = ({ page, setPage, cartCount, userName, userPhone, onLogout }) => 
                 flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
                 padding:"10px 4px 8px", border:"none", background:"transparent", cursor:"pointer", gap:3, position:"relative"
               }}>
-                {active && <div style={{ position:"absolute", top:0, left:"50%", transform:"translateX(-50%)", width:32, height:3, borderRadius:"0 0 4px 4px", background:"linear-gradient(135deg,#00b894,#00cec9)" }}/>}
+                {active && <div style={{ position:"absolute", top:0, left:"50%", transform:"translateX(-50%)", width:32, height:3, borderRadius:"0 0 4px 4px", background:"#0077b6" }}/>}
                 <div style={{
                   width:36, height:28, borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center",
-                  background: active ? "linear-gradient(135deg,#00b89420,#00cec920)" : "transparent",
+                  background: active ? "#0077b620" : "transparent",
                   transition:"background .2s"
                 }}>
-                  <Icon name={n.icon} size={18} color={active?"#00b894":"#9aa5b4"}/>
+                  <Icon name={n.icon} size={18} color={active?"#0077b6":"#9aa5b4"}/>
                 </div>
-                <span style={{ fontSize:10, fontWeight: active?700:500, color: active?"#00b894":"#9aa5b4", letterSpacing:.2 }}>{n.label.slice(0,7)}</span>
+                <span style={{ fontSize:10, fontWeight: active?700:500, color: active?"#0077b6":"#9aa5b4", letterSpacing:.2 }}>{n.label.slice(0,7)}</span>
               </button>
             );
           })}
@@ -359,14 +355,13 @@ const Navbar = ({ page, setPage, cartCount, userName, userPhone, onLogout }) => 
 
 // ── Medicine Card ─────────────────────────────────────────────────────────────
 const MedCard = ({ m, onAdd }) => {
-  // ✅ FIX — getImgUrl se sahi URL milega (dev + production dono mein)
   const img = getImgUrl(m.image);
   return (
     <div style={{ background:"#fff", borderRadius:16, border:"1px solid #f0f0f0", overflow:"hidden", boxShadow:"0 2px 12px rgba(0,0,0,.05)", transition:"transform .2s,box-shadow .2s" }}
       onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)";e.currentTarget.style.boxShadow="0 10px 30px rgba(0,0,0,.1)"}}
       onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="0 2px 12px rgba(0,0,0,.05)"}}>
       <div style={{ background:img?`url(${img}) center/cover`:"linear-gradient(135deg,#e8f8f5,#e3f6ff)", height:100, display:"flex", alignItems:"center", justifyContent:"center" }}>
-        {!img&&<Icon name="pill" size={34} color="#00b894"/>}
+        {!img&&<Icon name="pill" size={34} color="#0077b6"/>}
       </div>
       <div style={{ padding:12 }}>
         {m.requires_prescription&&<span style={{ background:"#fff0ec", color:"#e17055", fontSize:9, fontWeight:700, padding:"2px 7px", borderRadius:6, display:"inline-block", marginBottom:5, letterSpacing:.3 }}>Rx REQUIRED</span>}
@@ -383,7 +378,7 @@ const MedCard = ({ m, onAdd }) => {
             {m.mrp>m.price&&<span style={{ fontSize:11, color:"#c4c9d4", textDecoration:"line-through", marginLeft:5 }}>₹{m.mrp}</span>}
           </div>
           {onAdd&&m.stock>0&&(
-            <button onClick={()=>onAdd(m)} style={{ background:"linear-gradient(135deg,#00b894,#00cec9)", color:"#fff", border:"none", borderRadius:9, padding:"6px 11px", fontSize:11, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:3, boxShadow:"0 3px 8px #00b89430" }}>
+            <button onClick={()=>onAdd(m)} style={{ background:"#0077b6", color:"#fff", border:"none", borderRadius:9, padding:"6px 11px", fontSize:11, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:3, boxShadow:"0 3px 8px #0077b630" }}>
               <Icon name="plus" size={11} color="#fff"/> Add
             </button>
           )}
@@ -419,7 +414,7 @@ const HomePage = ({ setPage, setSearch }) => {
 
   return (
     <div style={{ maxWidth:1280, margin:"0 auto", padding:pad }}>
-      <div style={{ background:"linear-gradient(135deg,#00b894 0%,#00cec9 50%,#0984e3 100%)", borderRadius: isMobile?"0 0 28px 28px":24, padding: isMobile?"28px 22px 32px":"52px 56px", marginBottom:24, position:"relative", overflow:"hidden", marginLeft: isMobile?-16:0, marginRight: isMobile?-16:0 }}>
+      <div style={{ background:"#0077b6", borderRadius: isMobile?"0 0 28px 28px":24, padding: isMobile?"28px 22px 32px":"52px 56px", marginBottom:24, position:"relative", overflow:"hidden", marginLeft: isMobile?-16:0, marginRight: isMobile?-16:0 }}>
         <div style={{ position:"absolute", right:-40, top:-40, width:220, height:220, background:"rgba(255,255,255,.08)", borderRadius:"50%" }}/>
         <div style={{ position:"absolute", right:60, bottom:-60, width:160, height:160, background:"rgba(255,255,255,.05)", borderRadius:"50%" }}/>
         <h1 style={{ fontSize: isMobile?26:isTablet?34:44, fontWeight:900, color:"#fff", margin:"0 0 10px", lineHeight:1.15, position:"relative", zIndex:1 }}>
@@ -434,8 +429,8 @@ const HomePage = ({ setPage, setSearch }) => {
             placeholder="Search medicines, brands..."
             style={{ flex:1, padding: isMobile?"13px 16px":"15px 20px", borderRadius:14, border:"none", fontSize: isMobile?14:15, outline:"none", boxShadow:"0 4px 20px rgba(0,0,0,.15)", minWidth:0 }}/>
           <button onClick={()=>{setSearch(sq);setPage("medicines");}}
-            style={{ background:"rgba(255,255,255,.95)", color:"#00b894", border:"none", borderRadius:14, padding: isMobile?"13px 14px":"15px 22px", fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:7, boxShadow:"0 4px 20px rgba(0,0,0,.15)", flexShrink:0 }}>
-            <Icon name="search" size={16} color="#00b894"/>
+            style={{ background:"rgba(255,255,255,.95)", color:"#0077b6", border:"none", borderRadius:14, padding: isMobile?"13px 14px":"15px 22px", fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:7, boxShadow:"0 4px 20px rgba(0,0,0,.15)", flexShrink:0 }}>
+            <Icon name="search" size={16} color="#0077b6"/>
             {!isMobile && "Search"}
           </button>
         </div>
@@ -479,7 +474,7 @@ const HomePage = ({ setPage, setSearch }) => {
           <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
             {categories.map(c=>(
               <button key={c.id} onClick={()=>setPage("medicines")} style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 16px", background:"#fff", border:"1.5px solid #e8ecf0", borderRadius:12, cursor:"pointer", fontWeight:600, fontSize:13, color:"#2d3436", transition:"all .2s" }}
-                onMouseEnter={e=>{e.currentTarget.style.borderColor="#00b894";e.currentTarget.style.color="#00b894";e.currentTarget.style.background="#f0fdf9"}}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor="#0077b6";e.currentTarget.style.color="#0077b6";e.currentTarget.style.background="#f0f6fc"}}
                 onMouseLeave={e=>{e.currentTarget.style.borderColor="#e8ecf0";e.currentTarget.style.color="#2d3436";e.currentTarget.style.background="#fff"}}>
                 <span style={{ fontSize:17 }}>{c.icon}</span>{c.name}
               </button>
@@ -492,7 +487,7 @@ const HomePage = ({ setPage, setSearch }) => {
         <div>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
             <h2 style={{ fontSize: isMobile?17:22, fontWeight:800, color:"#1a1a2e", margin:0 }}>⭐ Featured</h2>
-            <button onClick={()=>setPage("medicines")} style={{ background:"none", border:"none", color:"#00b894", fontWeight:700, cursor:"pointer", fontSize:14 }}>View All →</button>
+            <button onClick={()=>setPage("medicines")} style={{ background:"none", border:"none", color:"#0077b6", fontWeight:700, cursor:"pointer", fontSize:14 }}>View All →</button>
           </div>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))", gap:14 }}>
             {featured.map(m=><MedCard key={m.id} m={m}/>)}
@@ -554,7 +549,7 @@ const MedicinesPage = ({ cartData, setCartData, cartId, toast, searchInit }) => 
           <div style={{ position:"absolute", left:13, top:"50%", transform:"translateY(-50%)" }}><Icon name="search" size={16} color="#b2bec3"/></div>
           <input value={search} onChange={e=>{setSearch(e.target.value);setPg(1);}} placeholder="Search medicines, brands, salts..."
             style={{ ...sel, paddingLeft:40, fontSize:15 }}
-            onFocus={e=>e.target.style.borderColor="#00b894"} onBlur={e=>e.target.style.borderColor="#e8ecf0"}/>
+            onFocus={e=>e.target.style.borderColor="#0077b6"} onBlur={e=>e.target.style.borderColor="#e8ecf0"}/>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
           <select value={selCat} onChange={e=>{setSelCat(e.target.value);setPg(1);}} style={sel}>
@@ -588,7 +583,7 @@ const MedicinesPage = ({ cartData, setCartData, cartId, toast, searchInit }) => 
           {total>20&&(
             <div style={{ display:"flex", justifyContent:"center", alignItems:"center", gap:10, marginTop:32 }}>
               <button onClick={()=>setPg(p=>Math.max(1,p-1))} disabled={pg===1} style={{ padding:"10px 20px", borderRadius:10, border:"1.5px solid #e8ecf0", background:"#fff", cursor:"pointer", fontWeight:600, color:"#636e72" }}>← Prev</button>
-              <span style={{ padding:"10px 20px", background:"linear-gradient(135deg,#00b894,#00cec9)", color:"#fff", borderRadius:10, fontWeight:700 }}>Page {pg}</span>
+              <span style={{ padding:"10px 20px", background:"#0077b6", color:"#fff", borderRadius:10, fontWeight:700 }}>Page {pg}</span>
               <button onClick={()=>setPg(p=>p+1)} disabled={medicines.length<20} style={{ padding:"10px 20px", borderRadius:10, border:"1.5px solid #e8ecf0", background:"#fff", cursor:"pointer", fontWeight:600, color:"#636e72" }}>Next →</button>
             </div>
           )}
@@ -628,7 +623,7 @@ const CartPage = ({ cartData, setCartData, cartId, toast, setPage }) => {
   if(ordered) return(
     <div style={{ maxWidth:500, margin:"40px auto", padding:"0 16px", textAlign:"center" }}>
       <div style={{ background:"#fff", borderRadius:24, padding: isMobile?28:48, boxShadow:"0 8px 40px rgba(0,0,0,.1)" }}>
-        <div style={{ width:80, height:80, background:"linear-gradient(135deg,#00b894,#00cec9)", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 20px", boxShadow:"0 8px 24px #00b89440" }}>
+        <div style={{ width:80, height:80, background:"#0077b6", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 20px", boxShadow:"0 8px 24px #0077b640" }}>
           <Icon name="check" size={36} color="#fff"/>
         </div>
         <h2 style={{ fontSize:26, fontWeight:800, color:"#1a1a2e", marginBottom:8 }}>Order Placed! 🎉</h2>
@@ -636,9 +631,9 @@ const CartPage = ({ cartData, setCartData, cartId, toast, setPage }) => {
         <div style={{ background:"#f8fafc", borderRadius:16, padding:20, marginBottom:24, textAlign:"left" }}>
           <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}><span style={{ color:"#8892a4" }}>Total</span><span style={{ fontWeight:700 }}>₹{ordered.total_amount}</span></div>
           {ordered.discount_amount>0&&<div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}><span style={{ color:"#8892a4" }}>Discount</span><span style={{ fontWeight:700, color:"#00b894" }}>-₹{ordered.discount_amount}</span></div>}
-          <div style={{ display:"flex", justifyContent:"space-between", borderTop:"1px solid #e8ecf0", paddingTop:10, marginTop:8 }}><span style={{ fontWeight:700 }}>Net Amount</span><span style={{ fontWeight:800, fontSize:18, color:"#00b894" }}>₹{ordered.net_amount}</span></div>
+          <div style={{ display:"flex", justifyContent:"space-between", borderTop:"1px solid #e8ecf0", paddingTop:10, marginTop:8 }}><span style={{ fontWeight:700 }}>Net Amount</span><span style={{ fontWeight:800, fontSize:18, color:"#0077b6" }}>₹{ordered.net_amount}</span></div>
         </div>
-        <button onClick={()=>{setOrdered(null);setPage("medicines");}} style={{ background:"linear-gradient(135deg,#00b894,#00cec9)", color:"#fff", border:"none", borderRadius:14, padding:"14px 32px", fontSize:16, fontWeight:700, cursor:"pointer", boxShadow:"0 6px 20px #00b89440" }}>Continue Shopping</button>
+        <button onClick={()=>{setOrdered(null);setPage("medicines");}} style={{ background:"#0077b6", color:"#fff", border:"none", borderRadius:14, padding:"14px 32px", fontSize:16, fontWeight:700, cursor:"pointer", boxShadow:"0 6px 20px #0077b640" }}>Continue Shopping</button>
       </div>
     </div>
   );
@@ -650,7 +645,7 @@ const CartPage = ({ cartData, setCartData, cartId, toast, setPage }) => {
           <Icon name="back" size={16}/> Back
         </button>
         <h1 style={{ fontSize: isMobile?20:26, fontWeight:800, color:"#1a1a2e", margin:0 }}>🛒 My Cart</h1>
-        <span style={{ background:"linear-gradient(135deg,#00b894,#00cec9)", color:"#fff", borderRadius:"50%", width:28, height:28, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, fontSize:13 }}>{items.length}</span>
+        <span style={{ background:"#0077b6", color:"#fff", borderRadius:"50%", width:28, height:28, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, fontSize:13 }}>{items.length}</span>
       </div>
 
       {items.length===0?(
@@ -658,30 +653,29 @@ const CartPage = ({ cartData, setCartData, cartId, toast, setPage }) => {
           <div style={{ fontSize:64, marginBottom:16 }}>🛒</div>
           <h3 style={{ color:"#b2bec3", fontSize:18, fontWeight:600, marginBottom:8 }}>Your cart is empty</h3>
           <p style={{ color:"#c4c9d4", marginBottom:24, fontSize:14 }}>Add some medicines to get started</p>
-          <button onClick={()=>setPage("medicines")} style={{ background:"linear-gradient(135deg,#00b894,#00cec9)", color:"#fff", border:"none", borderRadius:14, padding:"14px 28px", fontWeight:700, cursor:"pointer", fontSize:15, boxShadow:"0 6px 20px #00b89440" }}>Browse Medicines</button>
+          <button onClick={()=>setPage("medicines")} style={{ background:"#0077b6", color:"#fff", border:"none", borderRadius:14, padding:"14px 28px", fontWeight:700, cursor:"pointer", fontSize:15, boxShadow:"0 6px 20px #0077b640" }}>Browse Medicines</button>
         </div>
       ):(
         <div style={{ display:"grid", gridTemplateColumns: isMobile?"1fr":"1fr 340px", gap:20, alignItems:"start" }}>
           <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
             {items.map(item=>{
               const med=item.medicine;
-              
               const img = getImgUrl(med?.image);
               return(
                 <div key={item.id} style={{ background:"#fff", borderRadius:16, padding:14, border:"1px solid #f0f0f0", display:"flex", gap:12, alignItems:"center", boxShadow:"0 2px 10px rgba(0,0,0,.04)" }}>
                   <div style={{ width:56, height:56, background:img?`url(${img}) center/cover`:"linear-gradient(135deg,#e8f8f5,#e3f6ff)", borderRadius:12, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                    {!img&&<Icon name="pill" size={22} color="#00b894"/>}
+                    {!img&&<Icon name="pill" size={22} color="#0077b6"/>}
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
                     <h3 style={{ margin:"0 0 2px", fontSize:14, fontWeight:700, color:"#1a1a2e", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{med?.name}</h3>
                     <p style={{ margin:"0 0 4px", fontSize:12, color:"#b2bec3" }}>{med?.brand}</p>
-                    <span style={{ fontSize:15, fontWeight:800, color:"#00b894" }}>₹{med?.price}</span>
+                    <span style={{ fontSize:15, fontWeight:800, color:"#0077b6" }}>₹{med?.price}</span>
                   </div>
                   <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:8 }}>
                     <div style={{ display:"flex", alignItems:"center", gap:8, background:"#f4f6f8", borderRadius:10, padding:"4px 6px" }}>
                       <button onClick={()=>updateQty(med?.id,item.quantity-1)} style={{ width:28, height:28, borderRadius:7, border:"none", background:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 1px 4px rgba(0,0,0,.1)" }}><Icon name="minus" size={13}/></button>
                       <span style={{ fontWeight:800, fontSize:15, minWidth:22, textAlign:"center", color:"#1a1a2e" }}>{item.quantity}</span>
-                      <button onClick={()=>updateQty(med?.id,item.quantity+1)} style={{ width:28, height:28, borderRadius:7, border:"none", background:"#00b894", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><Icon name="plus" size={13} color="#fff"/></button>
+                      <button onClick={()=>updateQty(med?.id,item.quantity+1)} style={{ width:28, height:28, borderRadius:7, border:"none", background:"#0077b6", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><Icon name="plus" size={13} color="#fff"/></button>
                     </div>
                     <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                       <span style={{ fontWeight:800, color:"#1a1a2e", fontSize:14 }}>₹{typeof item.subtotal==="number"?item.subtotal.toFixed(2):item.subtotal}</span>
@@ -708,23 +702,23 @@ const CartPage = ({ cartData, setCartData, cartId, toast, setPage }) => {
             <div style={{ borderTop:"1px dashed #e8ecf0", paddingTop:12, marginBottom:18 }}>
               <div style={{ display:"flex", justifyContent:"space-between" }}>
                 <span style={{ fontWeight:800, fontSize:16 }}>Total</span>
-                <span style={{ fontWeight:900, fontSize:20, color:"#00b894" }}>₹{typeof total==="number"?total.toFixed(2):total}</span>
+                <span style={{ fontWeight:900, fontSize:20, color:"#0077b6" }}>₹{typeof total==="number"?total.toFixed(2):total}</span>
               </div>
             </div>
             <div style={{ marginBottom:12 }}>
               <label style={{ fontSize:12, fontWeight:700, display:"block", marginBottom:6, color:"#4a5568", letterSpacing:.3 }}>OFFER CODE</label>
               <input value={offerCode} onChange={e=>setOfferCode(e.target.value.toUpperCase())} placeholder="Enter coupon code"
                 style={{ width:"100%", padding:"11px 14px", border:"1.5px solid #e8ecf0", borderRadius:11, fontSize:14, outline:"none", fontFamily:"monospace", boxSizing:"border-box", letterSpacing:1 }}
-                onFocus={e=>e.target.style.borderColor="#00b894"} onBlur={e=>e.target.style.borderColor="#e8ecf0"}/>
+                onFocus={e=>e.target.style.borderColor="#0077b6"} onBlur={e=>e.target.style.borderColor="#e8ecf0"}/>
             </div>
             <div style={{ marginBottom:18 }}>
               <label style={{ fontSize:12, fontWeight:700, display:"block", marginBottom:6, color:"#4a5568", letterSpacing:.3 }}>DELIVERY ADDRESS *</label>
               <textarea value={address} onChange={e=>setAddress(e.target.value)} placeholder="Enter your full delivery address..." rows={3}
                 style={{ width:"100%", padding:"11px 14px", border:"1.5px solid #e8ecf0", borderRadius:11, fontSize:14, outline:"none", resize:"none", boxSizing:"border-box", lineHeight:1.5 }}
-                onFocus={e=>e.target.style.borderColor="#00b894"} onBlur={e=>e.target.style.borderColor="#e8ecf0"}/>
+                onFocus={e=>e.target.style.borderColor="#0077b6"} onBlur={e=>e.target.style.borderColor="#e8ecf0"}/>
             </div>
             <button onClick={placeOrder} disabled={placing}
-              style={{ width:"100%", background: placing?"#b2bec3":"linear-gradient(135deg,#00b894,#00cec9)", color:"#fff", border:"none", borderRadius:14, padding:15, fontSize:16, fontWeight:700, cursor: placing?"not-allowed":"pointer", boxShadow: placing?"none":"0 6px 20px #00b89440", transition:"all .2s" }}>
+              style={{ width:"100%", background: placing?"#b2bec3":"#0077b6", color:"#fff", border:"none", borderRadius:14, padding:15, fontSize:16, fontWeight:700, cursor: placing?"not-allowed":"pointer", boxShadow: placing?"none":"0 6px 20px #0077b640", transition:"all .2s" }}>
               {placing?"Placing Order...":"Place Order →"}
             </button>
           </div>
@@ -778,11 +772,11 @@ const PrescriptionPage = ({ userName, userPhone, toast }) => {
         <div style={{ background:"#fff", borderRadius:20, padding:24, boxShadow:"0 4px 20px rgba(0,0,0,.05)", border:"1px solid #f0f0f0" }}>
           <h2 style={{ fontSize:17, fontWeight:800, marginBottom:20, color:"#1a1a2e" }}>Upload New</h2>
           <div onClick={()=>document.getElementById("rx-inp").click()}
-            style={{ border:"2px dashed #00b894", borderRadius:16, padding:"28px 20px", textAlign:"center", cursor:"pointer", marginBottom:16, background:preview?"transparent":"#f0fdf9", transition:"background .2s" }}>
+            style={{ border:"2px dashed #0077b6", borderRadius:16, padding:"28px 20px", textAlign:"center", cursor:"pointer", marginBottom:16, background:preview?"transparent":"#f0f6fc", transition:"background .2s" }}>
             {preview?<img src={preview} alt="preview" style={{ maxWidth:"100%", maxHeight:190, borderRadius:10 }}/>:(
               <>
-                <div style={{ width:56, height:56, borderRadius:16, background:"#00b89420", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 12px" }}>
-                  <Icon name="upload" size={26} color="#00b894"/>
+                <div style={{ width:56, height:56, borderRadius:16, background:"#0077b620", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 12px" }}>
+                  <Icon name="upload" size={26} color="#0077b6"/>
                 </div>
                 <p style={{ margin:"0 0 4px", fontWeight:700, color:"#1a1a2e", fontSize:15 }}>Tap to upload</p>
                 <p style={{ margin:0, fontSize:13, color:"#b2bec3" }}>JPG, PNG, PDF supported</p>
@@ -790,12 +784,12 @@ const PrescriptionPage = ({ userName, userPhone, toast }) => {
             )}
           </div>
           <input id="rx-inp" type="file" accept="image/*,.pdf" style={{ display:"none" }} onChange={handleFile}/>
-          {file&&<p style={{ fontSize:13, color:"#00b894", marginBottom:12, fontWeight:600, display:"flex", alignItems:"center", gap:6 }}>📎 {file.name}</p>}
+          {file&&<p style={{ fontSize:13, color:"#0077b6", marginBottom:12, fontWeight:600, display:"flex", alignItems:"center", gap:6 }}>📎 {file.name}</p>}
           <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Notes for pharmacist (optional)..." rows={3}
             style={{ width:"100%", padding:"11px 14px", border:"1.5px solid #e8ecf0", borderRadius:11, fontSize:14, outline:"none", resize:"none", marginBottom:14, boxSizing:"border-box" }}
-            onFocus={e=>e.target.style.borderColor="#00b894"} onBlur={e=>e.target.style.borderColor="#e8ecf0"}/>
+            onFocus={e=>e.target.style.borderColor="#0077b6"} onBlur={e=>e.target.style.borderColor="#e8ecf0"}/>
           <button onClick={upload} disabled={uploading||!file}
-            style={{ width:"100%", background:file?"linear-gradient(135deg,#6c5ce7,#a29bfe)":"#e8ecf0", color:"#fff", border:"none", borderRadius:13, padding:14, fontSize:15, fontWeight:700, cursor:file?"pointer":"not-allowed", boxShadow:file?"0 6px 20px #6c5ce740":"none" }}>
+            style={{ width:"100%", background:file?"#0077b6":"#e8ecf0", color:"#fff", border:"none", borderRadius:13, padding:14, fontSize:15, fontWeight:700, cursor:file?"pointer":"not-allowed", boxShadow:file?"0 6px 20px #0077b640":"none" }}>
             {uploading?"Uploading...":"Upload Prescription"}
           </button>
         </div>
@@ -870,7 +864,7 @@ const ConsultPage = ({ userName, userPhone, toast }) => {
         <div style={{ fontSize:64, marginBottom:16 }}>{doctors.find(d=>d.key===booked.specialty)?.emoji}</div>
         <h2 style={{ fontSize:26, fontWeight:800, color:"#1a1a2e", marginBottom:8 }}>Consultation Booked! 🎉</h2>
         <p style={{ color:"#8892a4", marginBottom:24 }}>Your appointment with {doctors.find(d=>d.key===booked.specialty)?.name} is requested.</p>
-        <button onClick={()=>setBooked(null)} style={{ background:"linear-gradient(135deg,#00b894,#00cec9)", color:"#fff", border:"none", borderRadius:14, padding:"14px 32px", fontSize:16, fontWeight:700, cursor:"pointer", boxShadow:"0 6px 20px #00b89440" }}>Book Another</button>
+        <button onClick={()=>setBooked(null)} style={{ background:"#0077b6", color:"#fff", border:"none", borderRadius:14, padding:"14px 32px", fontSize:16, fontWeight:700, cursor:"pointer", boxShadow:"0 6px 20px #0077b640" }}>Book Another</button>
       </div>
     </div>
   );
@@ -899,17 +893,17 @@ const ConsultPage = ({ userName, userPhone, toast }) => {
             <label style={{ fontSize:12, fontWeight:700, display:"block", marginBottom:8, color:"#4a5568", letterSpacing:.3 }}>SYMPTOMS *</label>
             <textarea value={form.symptoms} onChange={e=>setForm(f=>({...f,symptoms:e.target.value}))} placeholder="e.g. Fever for 2 days, headache, body ache..." rows={4}
               style={{ width:"100%", padding:"13px 16px", border:"1.5px solid #e8ecf0", borderRadius:13, fontSize:14, outline:"none", resize:"none", boxSizing:"border-box", lineHeight:1.5 }}
-              onFocus={e=>e.target.style.borderColor="#00b894"} onBlur={e=>e.target.style.borderColor="#e8ecf0"}/>
+              onFocus={e=>e.target.style.borderColor="#0077b6"} onBlur={e=>e.target.style.borderColor="#e8ecf0"}/>
           </div>
           <div style={{ marginBottom:22 }}>
             <label style={{ fontSize:12, fontWeight:700, display:"block", marginBottom:8, color:"#4a5568", letterSpacing:.3 }}>APPOINTMENT DATE & TIME *</label>
             <input type="datetime-local" value={form.appointment_date} onChange={e=>setForm(f=>({...f,appointment_date:e.target.value}))}
               min={new Date().toISOString().slice(0,16)}
               style={{ width:"100%", padding:"13px 16px", border:"1.5px solid #e8ecf0", borderRadius:13, fontSize:14, outline:"none", boxSizing:"border-box" }}
-              onFocus={e=>e.target.style.borderColor="#00b894"} onBlur={e=>e.target.style.borderColor="#e8ecf0"}/>
+              onFocus={e=>e.target.style.borderColor="#0077b6"} onBlur={e=>e.target.style.borderColor="#e8ecf0"}/>
           </div>
           <button onClick={book} disabled={booking}
-            style={{ width:"100%", background:"linear-gradient(135deg,#00b894,#00cec9)", color:"#fff", border:"none", borderRadius:14, padding:16, fontSize:16, fontWeight:700, cursor:"pointer", boxShadow:"0 6px 20px #00b89440" }}>
+            style={{ width:"100%", background:"#0077b6", color:"#fff", border:"none", borderRadius:14, padding:16, fontSize:16, fontWeight:700, cursor:"pointer", boxShadow:"0 6px 20px #0077b640" }}>
             {booking?"Booking...": `Book — ${sel?.name} • ₹${sel?.fee}`}
           </button>
         </div>
@@ -1016,7 +1010,7 @@ const OrdersPage = ({ userPhone }) => {
                         <div key={item.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 0", borderBottom:"1px solid #f8f9fa" }}>
                           <div style={{ display:"flex", alignItems:"center", gap:10, minWidth:0 }}>
                             <div style={{ width:36, height:36, background:"linear-gradient(135deg,#e8f8f5,#e3f6ff)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                              <Icon name="pill" size={15} color="#00b894"/>
+                              <Icon name="pill" size={15} color="#0077b6"/>
                             </div>
                             <div style={{ minWidth:0 }}>
                               <p style={{ margin:0, fontSize:13, fontWeight:700, color:"#1a1a2e", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth: isMobile?150:260 }}>{item.medicine?.name||`Medicine #${item.medicine}`}</p>
@@ -1065,7 +1059,6 @@ function MainApp() {
         setCartId(null);
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cartId]);
 
   const handleUserSave = async (name, phone) => {
@@ -1094,7 +1087,7 @@ function MainApp() {
     @keyframes fadeIn  { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #00b89460; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #0077b660; border-radius: 10px; }
     input, button, select, textarea { font-family: inherit; }
     button { -webkit-tap-highlight-color: transparent; }
     @media (max-width: 767px) {
