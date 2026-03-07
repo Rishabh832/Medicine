@@ -186,7 +186,7 @@ class AddCartItemView(APIView):
 class OrderViewSet(viewsets.ModelViewSet):
     serializer_class   = OrderSerializer
     permission_classes = [permissions.AllowAny]
-    http_method_names  = ["get", "post"]
+    http_method_names  = ["get", "post", "patch", "put"]
 
     def get_queryset(self):
         phone    = self.request.query_params.get("phone")
