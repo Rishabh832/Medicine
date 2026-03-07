@@ -125,8 +125,8 @@ function LoginPage({ onLogin }) {
     <div style={{ minHeight:"100vh", background:"#0f1117", display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}>
       <div style={{ width:"100%", maxWidth:380, padding:"40px 32px", background:"#1a1d27", borderRadius:20, boxShadow:"0 20px 60px rgba(0,0,0,.5)", border:"1px solid #2a2d3a" }}>
         <div style={{ textAlign:"center", marginBottom:32 }}>
-          <img src={logo} alt="logo" style={{ width:56, height:56, borderRadius:16, objectFit:"contain", display:"block", margin:"0 auto 14px" }} />
-          <h1 style={{ color:"#fff", fontSize:22, fontWeight:800, margin:0 }}>MediRun Admin</h1>
+          <img src={logo} alt="logo" style={{ width:67, height:56, borderRadius:16, objectFit:"contain", display:"block", margin:"0 auto 14px" }} />
+          <h1 style={{ color:"#fff", fontSize:22, fontWeight:800, margin:0 }}>Mediova Admin</h1>
           <p style={{ color:"#636e72", fontSize:12, marginTop:6, marginBottom:0 }}>Secure admin dashboard</p>
         </div>
         <label style={{ color:"#a0a8b8", fontSize:11, fontWeight:700, letterSpacing:1, display:"block", marginBottom:8 }}>ADMIN PASSWORD</label>
@@ -134,7 +134,7 @@ function LoginPage({ onLogin }) {
           style={{ width:"100%", padding:"13px 14px", background:"#0f1117", border:`2px solid ${err?"#ff4757":"#2a2d3a"}`, borderRadius:12, color:"#fff", fontSize:14, outline:"none", boxSizing:"border-box" }} />
         {err && <p style={{ color:"#ff4757", fontSize:12, marginTop:6 }}>Wrong password</p>}
         <button onClick={submit} style={{ width:"100%", marginTop:18, padding:13, background:"linear-gradient(135deg,#00b894,#00cec9)", border:"none", borderRadius:12, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer" }}>Login →</button>
-        <p style={{ color:"#3a3a3a", fontSize:11, textAlign:"center", marginTop:14, marginBottom:0 }}>Default: medirun@admin123</p>
+        <p style={{ color:"#3a3a3a", fontSize:11, textAlign:"center", marginTop:14, marginBottom:0 }}>Default: mediova</p>
       </div>
     </div>
   );
@@ -868,7 +868,7 @@ function Sidebar({ page, setPage, onLogout, stats, collapsed, onToggle }) {
           <div style={{ display:"flex", alignItems:"center", gap:9, minWidth:0 }}>
             <img src={logo} alt="logo" style={{ width:33, height:33, borderRadius:9, objectFit:"contain", flexShrink:0 }} />
             <div style={{ minWidth:0 }}>
-              <div style={{ color:"#fff", fontWeight:800, fontSize:14 }}>MediRun</div>
+              <div style={{ color:"#fff", fontWeight:800, fontSize:14 }}>Mediova</div>
               <div style={{ color:"#636e72", fontSize:9, fontWeight:600, letterSpacing:.5 }}>ADMIN PANEL</div>
             </div>
           </div>
