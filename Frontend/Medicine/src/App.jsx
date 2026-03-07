@@ -274,7 +274,7 @@ const Navbar = ({ page, setPage, cartCount, userName, userPhone, onLogout }) => 
           )}
 
           <div onClick={()=>setPage("home")} style={{ display:"flex", alignItems:"center", gap:10, cursor:"pointer", marginRight: isDesktop?40:16, flexShrink:0 }}>
-            <img src={logo} alt="Mediova" style={{ height: isMobile?70:90, width:"auto", objectFit:"contain", filter:"drop-shadow(0 2px 6px rgba(0,180,216,.25))" }}/>
+            <img src={logo} alt="Mediova" style={{ height: isMobile?50:63, width:"auto", objectFit:"contain", filter:"drop-shadow(0 2px 6px rgba(0,180,216,.25))" }}/>
           </div>
 
           {!isMobile && (
