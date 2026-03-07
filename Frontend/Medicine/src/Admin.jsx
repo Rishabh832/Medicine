@@ -127,7 +127,7 @@ function LoginPage({ onLogin }) {
           <div style={{ width:56, height:56, background:"linear-gradient(135deg,#00b894,#00cec9)", borderRadius:16, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}>
             <Icon n="pill" s={26} c="#fff" />
           </div>
-          <h1 style={{ color:"#fff", fontSize:22, fontWeight:800, margin:0 }}>Mediova Admin</h1>
+          <h1 style={{ color:"#fff", fontSize:22, fontWeight:800, margin:0 }}>MediRun Admin</h1>
           <p style={{ color:"#636e72", fontSize:12, marginTop:6, marginBottom:0 }}>Secure admin dashboard</p>
         </div>
         <label style={{ color:"#a0a8b8", fontSize:11, fontWeight:700, letterSpacing:1, display:"block", marginBottom:8 }}>ADMIN PASSWORD</label>
@@ -135,7 +135,7 @@ function LoginPage({ onLogin }) {
           style={{ width:"100%", padding:"13px 14px", background:"#0f1117", border:`2px solid ${err?"#ff4757":"#2a2d3a"}`, borderRadius:12, color:"#fff", fontSize:14, outline:"none", boxSizing:"border-box" }} />
         {err && <p style={{ color:"#ff4757", fontSize:12, marginTop:6 }}>Wrong password</p>}
         <button onClick={submit} style={{ width:"100%", marginTop:18, padding:13, background:"linear-gradient(135deg,#00b894,#00cec9)", border:"none", borderRadius:12, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer" }}>Login →</button>
-        <p style={{ color:"#3a3a3a", fontSize:11, textAlign:"center", marginTop:14, marginBottom:0 }}>Default: mediova</p>
+        <p style={{ color:"#3a3a3a", fontSize:11, textAlign:"center", marginTop:14, marginBottom:0 }}>Default: medirun@admin123</p>
       </div>
     </div>
   );
@@ -289,7 +289,7 @@ function Dashboard({ toast }) {
 
   return (
     <div>
-      <PageHeader title="📊 Dashboard" sub="Mediova overview" onRefresh={load} />
+      <PageHeader title="📊 Dashboard" sub="MediRun overview" onRefresh={load} />
       <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:12, marginBottom:24 }}>
         <StatCard label="Medicines"     value={stats.medicines}     icon="pill"  color="#00b894" />
         <StatCard label="Prescriptions" value={stats.prescriptions} icon="rx"    color="#6c5ce7" sub={stats.pendingRx+" pending"} />
@@ -299,7 +299,7 @@ function Dashboard({ toast }) {
       <div style={{ background:"#1a1d27", borderRadius:14, padding:20, border:"1px solid #2a2d3a" }}>
         <h3 style={{ color:"#fff", fontSize:14, fontWeight:700, marginBottom:14, marginTop:0 }}>📋 Pending Prescriptions</h3>
         {pendRx.length === 0 ? (
-          <p style={{ color:"#00b894", textAlign:"center", padding:16, fontSize:12 }}>✅ No pending</p>
+          <p style={{ color:"#00b894", textAlign:"center", padding:16, fontSize:12 }}>✅ Koi pending nahi!</p>
         ) : pendRx.map(rx => (
           <div key={rx.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:"1px solid #2a2d3a" }}>
             <div>
@@ -653,7 +653,7 @@ function Medicines({ toast }) {
 }
 
 /* ── Categories ── */
-const CAT_EMPTY = { name:"", slug:"", icon:"💊", description:"" };
+const CAT_EMPTY = { name:"", slug:"", icon:"💊" };
 
 function Categories({ toast }) {
   const [cats, setCats] = useState([]);
@@ -674,7 +674,7 @@ function Categories({ toast }) {
   useEffect(() => { load(); }, [load]);
 
   function openEdit(c) {
-    setForm({ name:c.name, slug:c.slug, icon:c.icon||"💊", description:c.description||"" });
+    setForm({ name:c.name, slug:c.slug, icon:c.icon||"💊" });
     setEditCat(c); setShowAdd(true);
   }
 
@@ -708,7 +708,6 @@ function Categories({ toast }) {
             <div style={{ fontSize:32, marginBottom:8 }}>{c.icon}</div>
             <div style={{ color:"#fff", fontWeight:700, fontSize:14 }}>{c.name}</div>
             <div style={{ color:"#636e72", fontSize:11, marginTop:3 }}>/{c.slug}</div>
-            {c.description && <div style={{ color:"#a0a8b8", fontSize:11, marginTop:5 }}>{c.description}</div>}
           </div>
         ))}
       </div>
@@ -720,7 +719,6 @@ function Categories({ toast }) {
           <Inp label="Name"        value={form.name}        onChange={v=>f("name",v)} required />
           <Inp label="Slug"        value={form.slug}        onChange={v=>f("slug",v.toLowerCase().replace(/\s+/g,"-"))} placeholder="pain-relief" required />
           <Inp label="Icon Emoji"  value={form.icon}        onChange={v=>f("icon",v)} />
-          <Inp label="Description" value={form.description} onChange={v=>f("description",v)} />
           <button onClick={save} style={{ width:"100%", padding:13, background:"linear-gradient(135deg,#6c5ce7,#a29bfe)", border:"none", borderRadius:11, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer" }}>
             {editCat?"Update Category":"Add Category"}
           </button>
@@ -731,7 +729,7 @@ function Categories({ toast }) {
 }
 
 /* ── Offers ── */
-const OFFER_EMPTY = { title:"", subtitle:"", code:"", discount_percent:0, discount_flat:0, emoji:"🎉", color:"#00b894", badge:"", min_order_value:0 };
+const OFFER_EMPTY = { title:"", subtitle:"", code:"", discount_percent:0, discount_flat:0, emoji:"🎉", color:"#00b894", badge:"", min_order_value:0, valid_until:"" };
 
 function Offers({ toast }) {
   const [offers, setOffers] = useState([]);
@@ -752,13 +750,13 @@ function Offers({ toast }) {
   useEffect(() => { load(); }, [load]);
 
   function openEdit(o) {
-    setForm({ title:o.title, subtitle:o.subtitle||"", code:o.code||"", discount_percent:o.discount_percent||0, discount_flat:o.discount_flat||0, emoji:o.emoji||"🎉", color:o.color||"#00b894", badge:o.badge||"", min_order_value:o.min_order_value||0 });
+    setForm({ title:o.title, subtitle:o.subtitle||"", code:o.code||"", discount_percent:o.discount_percent||0, discount_flat:o.discount_flat||0, emoji:o.emoji||"🎉", color:o.color||"#00b894", badge:o.badge||"", min_order_value:o.min_order_value||0, valid_until: o.valid_until ? o.valid_until.slice(0,16) : "" });
     setEditOff(o); setShowAdd(true);
   }
 
   async function save() {
     if (!form.title) return toast("Title required","error");
-    const payload = { ...form, discount_percent:parseInt(form.discount_percent)||0, discount_flat:parseFloat(form.discount_flat)||0, min_order_value:parseFloat(form.min_order_value)||0 };
+    const payload = { ...form, discount_percent:parseInt(form.discount_percent)||0, discount_flat:parseFloat(form.discount_flat)||0, min_order_value:parseFloat(form.min_order_value)||0, valid_until: form.valid_until || null };
     const d = editOff ? await patch("/offers/"+editOff.id+"/", payload) : await post("/offers/", payload);
     if (d.id) { toast(editOff?"Updated!":"Offer added!","success"); setShowAdd(false); setEditOff(null); setForm(OFFER_EMPTY); load(); }
     else toast("Failed: "+JSON.stringify(d),"error");
@@ -794,6 +792,7 @@ function Offers({ toast }) {
               <div style={{ color:"#d0d8e8", fontSize:12, marginTop:3 }}>{o.subtitle}</div>
               {o.code && <div style={{ background:"rgba(0,0,0,.3)", borderRadius:7, padding:"4px 10px", display:"inline-block", marginTop:8, fontFamily:"monospace", color:"#ffeaa7", fontWeight:700, letterSpacing:1, fontSize:12 }}>CODE: {o.code}</div>}
               {o.min_order_value>0 && <div style={{ color:"#a0a8b8", fontSize:11, marginTop:6 }}>Min order: ₹{o.min_order_value}</div>}
+              {o.valid_until && <div style={{ color:"#ff7675", fontSize:11, marginTop:4 }}>⏰ Expires: {new Date(o.valid_until).toLocaleString()}</div>}
             </div>
           );
         })}
@@ -812,6 +811,14 @@ function Offers({ toast }) {
             <Inp label="Min Order ₹"     value={form.min_order_value}  onChange={v=>f("min_order_value",v)} type="number" />
             <Inp label="Badge Text"      value={form.badge}            onChange={v=>f("badge",v)} placeholder="HOT" />
             <Inp label="Emoji"           value={form.emoji}            onChange={v=>f("emoji",v)} />
+          </div>
+          <div style={{ marginBottom:14 }}>
+            <label style={{ color:"#a0a8b8", fontSize:11, fontWeight:700, display:"block", marginBottom:5, letterSpacing:.5 }}>VALID UNTIL (Date & Time)</label>
+            <input type="datetime-local" value={form.valid_until} onChange={e=>f("valid_until",e.target.value)}
+              style={{ width:"100%", padding:"10px 13px", background:"#0f1117", border:"1px solid #2a2d3a", borderRadius:10, color: form.valid_until?"#fff":"#636e72", fontSize:13, outline:"none", boxSizing:"border-box", colorScheme:"dark" }}
+              onFocus={e => e.target.style.borderColor="#00b894"}
+              onBlur={e  => e.target.style.borderColor="#2a2d3a"} />
+            {form.valid_until && <div style={{ color:"#636e72", fontSize:11, marginTop:4 }}>Expires: {new Date(form.valid_until).toLocaleString()}</div>}
           </div>
           <div style={{ marginBottom:18 }}>
             <label style={{ color:"#a0a8b8", fontSize:11, fontWeight:700, display:"block", marginBottom:5 }}>COLOR</label>
@@ -862,7 +869,7 @@ function Sidebar({ page, setPage, onLogout, stats, collapsed, onToggle }) {
           <div style={{ display:"flex", alignItems:"center", gap:9, minWidth:0 }}>
             <div style={{ width:33, height:33, background:"linear-gradient(135deg,#00b894,#00cec9)", borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Icon n="pill" s={15} c="#fff" /></div>
             <div style={{ minWidth:0 }}>
-              <div style={{ color:"#fff", fontWeight:800, fontSize:14 }}>Mediova</div>
+              <div style={{ color:"#fff", fontWeight:800, fontSize:14 }}>MediRun</div>
               <div style={{ color:"#636e72", fontSize:9, fontWeight:600, letterSpacing:.5 }}>ADMIN PANEL</div>
             </div>
           </div>
@@ -893,7 +900,7 @@ function MobileDrawer({ page, setPage, onLogout, stats, open, onClose }) {
         <div style={{ padding:"18px 16px 14px", borderBottom:"1px solid #2a2d3a", display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
           <div style={{ display:"flex", alignItems:"center", gap:9 }}>
             <div style={{ width:32, height:32, background:"linear-gradient(135deg,#00b894,#00cec9)", borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center" }}><Icon n="pill" s={14} c="#fff" /></div>
-            <div><div style={{ color:"#fff", fontWeight:800, fontSize:14 }}>Mediova</div><div style={{ color:"#636e72", fontSize:9, fontWeight:600, letterSpacing:.5 }}>ADMIN PANEL</div></div>
+            <div><div style={{ color:"#fff", fontWeight:800, fontSize:14 }}>MediRun</div><div style={{ color:"#636e72", fontSize:9, fontWeight:600, letterSpacing:.5 }}>ADMIN PANEL</div></div>
           </div>
           <button onClick={onClose} style={{ background:"#2a2d3a", border:"none", borderRadius:7, padding:"5px 6px", cursor:"pointer", color:"#fff", display:"flex" }}><Icon n="x" s={15} /></button>
         </div>
@@ -924,7 +931,7 @@ function TopBar({ page, onMenu, stats }) {
         </button>
         <div style={{ display:"flex", alignItems:"center", gap:7 }}>
           <div style={{ width:27, height:27, background:"linear-gradient(135deg,#00b894,#00cec9)", borderRadius:7, display:"flex", alignItems:"center", justifyContent:"center" }}><Icon n="pill" s={12} c="#fff" /></div>
-          <span style={{ color:"#fff", fontWeight:800, fontSize:14 }}>Mediova</span>
+          <span style={{ color:"#fff", fontWeight:800, fontSize:14 }}>MediRun</span>
         </div>
       </div>
       <div style={{ display:"flex", alignItems:"center", gap:6 }}>
