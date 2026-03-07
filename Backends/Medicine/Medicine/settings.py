@@ -164,3 +164,9 @@ USE_I18N      = True
 USE_TZ        = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+import sys
+print("=== STORAGE ===", DEFAULT_FILE_STORAGE, file=sys.stderr)
+print("=== CLOUD_NAME ===", os.environ.get('CLOUDINARY_CLOUD_NAME'), file=sys.stderr)
+print("=== API_KEY ===", os.environ.get('CLOUDINARY_API_KEY'), file=sys.stderr)
