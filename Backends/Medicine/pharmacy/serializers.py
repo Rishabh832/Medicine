@@ -17,7 +17,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class MedicineSerializer(serializers.ModelSerializer):
     discount_percent = serializers.SerializerMethodField()
-    image = serializers.SerializerMethodField()  # ← YE ADD KARO
+    image = serializers.ImageField(required=False, allow_null=True)
     category_slug = serializers.SlugRelatedField(
         source='category',
         slug_field='slug',
