@@ -197,7 +197,13 @@ class OrderViewSet(viewsets.ModelViewSet):
         if phone:
             return qs.filter(customer_phone=phone)
         return qs.none()
-
+    
+    def get_object(self):
+        # ✅ PATCH ke liye direct fetch
+        obj = Order.objects.prefetch_related("items__medicine").get(pk=self.kwargs["pk"])
+        self.check_object_permissions(self.request, obj)
+        return obj
+    
     def create(self, request):
         cart_id          = request.data.get("cart_id")
         delivery_address = request.data.get("delivery_address")
